@@ -1,0 +1,104 @@
+:root{
+  --base-dark: #000;
+  --base-dark-2: #0e1c2a;    /* Sombra más oscura */
+  --accent-gold: #f6c941;    /* Amarillo dorado */
+  --accent-yellow: #f6c941;  /* Amarillo claro */
+  --accent-action: #ff6933;  /* Naranja/acción */
+  --white: #FFFFFF;
+  --card-bg: rgba(255,255,255,0.03);
+  --card-border: rgba(255,255,255,0.06);
+  --muted: rgba(255,255,255,0.65);
+}
+
+.fs-3 {
+  color: #ff6933;
+}
+
+.fs-6 {
+  color: #ff6933;
+}
+
+.table-id-color{
+  color: #f6c941; 
+}
+
+/* ---------- Fondo principal (oscuro dominante con sutil degradado) ---------- */
+body.gradient-bg {
+  background: linear-gradient(180deg, var(--base-dark) 1%, var(--base-dark-2) 100%);
+  min-height: 100vh;
+  color: var(--white); 
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+/* ligera textura radial para profundidad */
+body.gradient-bg::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(600px 300px at 10% 20%, rgba(229,201,78,0.03), transparent 10%),
+    radial-gradient(500px 250px at 90% 80%, rgba(255,85,50,0.02), transparent 10%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- Contenedor y tarjeta ---------- */
+.animated-container { position: relative; z-index: 1; }
+
+.card {
+  border-radius: 14px;
+  background: #142434;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+  color: var(--white);
+  padding: 1.5rem;
+}
+
+/* Si prefieres tarjeta más sólida, cambia background a rgba(11,28,45,0.85) */
+
+/* ---------- Logo ---------- */
+.tiankawards-logo {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--accent-gold);
+  display: block;
+  margin: 0 auto 14px auto;
+  background: rgba(255,255,255,0.02);
+}
+
+/* ---------- Tabs (estilo integrado, tipo pills) ---------- */
+.nav-tabs {
+  border-bottom: none;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  width: -webkit-fill-available;;
+}
+
+.nav-tabs .nav-link {
+  color: #ffffff;
+  background: #ffffff14; /*#0b1c2c;*/
+  border: 1px solid transparent;
+  padding: 8px 18px;
+  font-weight: 600;
+  transition: all 160ms ease;
+  box-shadow: none;
+  width: 12.25rem;
+}
+
+.nav-tabs .nav-link:hover {
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--base-dark);
+  background-color: #f8ce45 !important;
+  border: 1px solid rgba(0,0,0,0.06);
+
+}

@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment variables
+.env
+.env.local
+sqlexport.sql
+ec2-commands.sh
+hiddingdata.txt
+fix-rds-access.sh
+tiankawards-app.tar.gz
+deploy-to-ec2.sh
+deploy-remote.sh
+
+# AWS
+*.pem
+aws-deployment/*.pem
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs.txt
+
+# OS
+.DS_Store
+Thumbs.db

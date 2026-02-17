@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login Web3</title>
+    <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="gradient-bg">
+
+<div class="container d-flex justify-content-center align-items-center vh-100 animated-container">
+    <div class="card shadow-lg p-4 text-center" style="max-width: 450px; width: 100%; background-color:#0e1c2a;">
+        <img src="/static/img/logo_tonkiapp-short.jpeg" class="" alt="Logo"> <!--calse css out tiankawards-logo-->
+
+        <ul class="nav nav-tabs mb-3 mt-1 justify-content-center" id="loginTabs" role="tablist" style="border-bottom-color: #0e1c2a;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="user-tab" data-bs-toggle="tab" data-bs-target="#user" type="button" role="tab">Usuario</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wallet-tab" data-bs-toggle="tab" data-bs-target="#wallet" type="button" role="tab">Wallet</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Login Usuario -->
+            <div class="tab-pane fade show active" id="user" role="tabpanel">
+                <form action="/" method="POST">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" placeholder="Usuario" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" class="form-control" placeholder="Contraseña" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Ingresar</button>
+                </form>
+            </div>
+
+            <!-- Login Wallet -->
+            <div class="tab-pane fade" id="wallet" role="tabpanel">
+                <form action="/wallet-login" method="POST">
+                    <button type="submit" class="btn btn-success w-100 mb-2">Conectar Metamask</button>
+                    <button type="submit" class="btn btn-success w-100 mb-2">Conectar Fregter</button>
+                    <button type="submit" class="btn btn-success w-100 mb-2">Conectar WalletConnect</button>
+                    <button type="submit" class="btn btn-success w-100">Conectar Coinbase</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
