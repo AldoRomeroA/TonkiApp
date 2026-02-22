@@ -1,0 +1,30 @@
+<div class="container mt-4">
+    <h2>Asignar Puntos a Cliente</h2>
+    <form method="POST" action="/assign_points">
+        <div class="mb-3">
+            <label for="id_usuario" class="form-label">ID Usuario (del QR)</label>
+            <input type="text" class="form-control" id="id_usuario" name="id_usuario" required>
+        </div>
+        <div class="mb-3">
+            <label for="id_establecimiento" class="form-label">Establecimiento</label>
+            <select class="form-select" id="id_establecimiento" name="id_establecimiento" required>
+                {% for est in establecimientos %}
+                <option value="{{ est.id_establecimiento }}">{{ est.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="titulo" class="form-label">Título</label>
+            <input type="text" class="form-control" id="titulo" name="titulo" required>
+        </div>
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcion" name="descripcion"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="puntos" class="form-label">Puntos</label>
+            <input type="number" class="form-control" id="puntos" name="puntos" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Asignar Puntos</button>
+    </form>
+</div>

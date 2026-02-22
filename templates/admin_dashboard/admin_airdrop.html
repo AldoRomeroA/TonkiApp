@@ -26,7 +26,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/">
+                    <a class="nav-link" href="/logout">
                         <i class="bi bi-box-arrow-right"></i> Salir
                     </a>
                 </li>
@@ -53,14 +53,14 @@
                         <div class="d-grid gap-3 d-md-block">
                             <a href="" class="btn btn-outline-warning">Añadir Fondos</a>
                             <a href="/send_airdrop" class="btn btn-outline-warning">Desplegar Airdrop</a>
-                            <a href="" class="btn btn-outline-warning">Configurar Airdrop</a>
+                            <a href="/configure_airdrop" class="btn btn-outline-warning">Configurar Airdrop</a>
                         </div>
                     </div>
                 </div>
             </div>
 
             
-            <!-- Flash Messages -->
+            <!-- Alert Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -145,6 +145,18 @@
         </div>
     </div>
 </div>
+
+<script>
+  // Ocultar automáticamente las alertas después de 5 segundos
+  setTimeout(function() {
+    let alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+      let bsAlert = new bootstrap.Alert(alert);
+      bsAlert.close();
+    });
+  }, 5000);
+</script>
+
 
 </body>
 </html>

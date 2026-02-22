@@ -1,0 +1,54 @@
+1. VALIDAR QUE SI NO HAY USUARIOS LISTADO EN ADMIN NO SE PUEDA HACER EL DESPLIEGUE DEL AIRDROP_PUBLIC
+
+2. AGREGAR UNA TABLA DE ESTABLECIEMINTOS Y ESTARA LIGADO A LOS ADMINSTRADORES 
+    SABER QUE ESTABLECIMENTO ADMINISTRA CADA USUARIO TIPO ADMIN
+    SABER QUE CLIENTES TIENEN PUNTOS EN CUAL ESTABLECIMIENTO
+    #Se agregaron ya
+
+3. LOGIN DE TIPO CLIENTES 
+    #Ya medio quedo xd 
+
+4. GENERAR QR PARA ENVIAR DATOS AL ADMIN QUE ESCANEE 
+    ESTABLECER QUE POR VISITA SON 100PTS
+    MAS UN PORCENTAJE EXTRA DE LA CUENTA POR EJEMPLO 100 POR CADA 1000 DE CONSUMO. 
+    REGLA EDITABLE EN CONFIGURACION DEL AIRDOR?
+
+5. RE HACER LA ARQUITECURA:
+/TonkiApp   
+│── /static
+│   ├── /css
+│   │   ├── main_styles_tiankawards.css
+│   ├── /js
+│   └── /img
+│── /modules
+│   ├── usuario.py
+│   └── recompensa.py
+│   ├── establecimiento.py
+│   ├── credencial.py
+│   └── airdropConfig.py
+│   ├── airdropLog.py
+│── /controllers
+│   ├── login.py
+│   └── admin.py
+│   ├── user.py
+│   └── airdrop.py
+│   ├── points.py
+│── /templates
+│   ├── \includes
+│   │   ├── header.html
+│   │   ├── footer.html
+│   │   ├── alert.html
+│   ├── \admin_dashboard
+│   │   ├── admin_airdrop_config.html
+│   │   ├── admin_airdrop.html
+│   │   ├── admin_dashboard.html
+│   ├── \user_dashboard
+│   │   ├── user_dashboard.html
+│   ├── \login
+│   │   ├── login.html
+│── app.py
+│── requirements.txt
+└── config.py
+
+
+
