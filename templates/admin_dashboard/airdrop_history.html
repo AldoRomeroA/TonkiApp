@@ -1,0 +1,40 @@
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Admin</th>
+            <th>Establecimiento</th>
+            <th>Monto</th>
+            <th>Usuarios Involucrados</th>
+            <th>Hash</th>
+            <th>Éxito</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.executed_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+            <td>{{ log.user.name if log.user else "N/A" }}</td>
+            <td>{{ log.establishment.name if log.establishment else "N/A" }}</td>
+            <td>{{ log.total_amount }}</td>
+            <td>{{ log.users_involved }}</td>
+            <td>
+                {% if log.transaction_hash %}
+                    <a href="{{ horizon_url }}/transactions/{{ log.transaction_hash }}" target="_blank">
+                        {{ log.transaction_hash }}
+                    </a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>
+                {% if log.success %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Sí</span>
+                {% else %}
+                    <span class="badge bg-danger"><i class="bi bi-x-circle"></i> No</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

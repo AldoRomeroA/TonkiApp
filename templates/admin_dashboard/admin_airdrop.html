@@ -21,7 +21,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link active" href="/dashboard">
+                    <a class="nav-link active" href="/admin_dashboard">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
@@ -51,26 +51,42 @@
 
                     <div class="d-flex justify-content-center mt-4">
                         <div class="d-grid gap-3 d-md-block">
-                            <a href="" class="btn btn-outline-warning">Añadir Fondos</a>
-                            <a href="/send_airdrop" class="btn btn-outline-warning">Desplegar Airdrop</a>
-                            <a href="/configure_airdrop" class="btn btn-outline-warning">Configurar Airdrop</a>
+                            <a href="" class="btn btn-outline-warning">
+                                <i class="bi bi-cash-stack"></i> Añadir Fondos
+                            </a>
+                            <a href="/send_airdrop" class="btn btn-outline-warning">
+                                <i class="bi bi-send-check"></i> Desplegar Airdrop
+                            </a>
+                            <a href="/configure_airdrop" class="btn btn-outline-warning">
+                                <i class="bi bi-gear"></i> Configurar Airdrop
+                            </a>
+                            <button id="btnHistorial" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#historialModal">
+                                <i class="bi bi-clock-history"></i> Historial de Movimientos
+                            </button>
+                            <a id="btnHorizon" href="#" target="_blank" class="btn btn-outline-info" style="display:none;">
+                                <i class="bi bi-link-45deg"></i> Ver en Horizon
+                            </a>
                         </div>
                     </div>
+
                 </div>
             </div>
 
             
             <!-- Alert Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="mt-2 alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                    {% if horizon_url %}
+                    <a href="{{ horizon_url }}" target="_blank" class="btn btn-sm btn-info ms-2">Ver en Horizon</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% endif %}
             {% endwith %}
+
 
             <!-- Users Table -->
             <div class="row mt-4">
@@ -97,27 +113,22 @@
                                     <tbody>
                                         {% for usuario in usuarios %}
                                         <tr>
-                                            <td class="table-id-color"><strong>{{ usuario.ID }}</strong></td>
+                                            <td class="table-id-color">
+                                                <strong>{{ usuario.ID[:6] }}...{{ usuario.ID[-4:] }}</strong>
+                                            </td>
                                             <td>
                                                 <i class="bi bi-person-circle"></i>
-                                                {{ usuario.Nombre}}
+                                                {{ usuario.Nombre }}
                                             </td>
-                                            <!--<td>{{ usuario.correo }}</td>-->
                                             <td>
                                                 {% if usuario.Wallet %}
                                                     <p class="table-id-color">{{ usuario.Wallet[:10] }}...{{ usuario.Wallet[-8:] }}</p>
-                                                    <!-- <span class="badge bg-success badge-custom ms-2">
-                                                        <i class="bi bi-check-circle"></i>
-                                                    </span> -->
                                                 {% else %}
-                                                    <span class="text-muted">Sin wallet</span>
+                                                    <span class="text-white">
+                                                        <i class="bi bi-x-circle"></i> Sin wallet
+                                                    </span>
                                                 {% endif %}
                                             </td>
-                                            <!--td>{{ usuario.edad if usuario.edad else '-' }}</td -->
-                                            <!--td>
-                                                <span class="badge bg-info badge-custom">{{ usuario.tipo }}</span>
-                                            </td>
-                                            <td>{{ usuario.creado_en.strftime('%d/%m/%Y') if usuario.creado_en else '-' }}</td>-->
                                             <td>{{ usuario.Tonkis }}</td> 
                                             <td>{{ "%.2f"|format(usuario.porcentaje_fondo) }}%</td>
                                         </tr>
@@ -142,20 +153,68 @@
                 </div>
             </div>
 
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Historial -->
+<div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historialModalLabel">
+                <i class="bi bi-clock-history"></i> Historial de Movimientos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+            <div id="historialContent" class="table-responsive">
+            <!-- Aquí se cargará el historial vía AJAX -->
+            </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-  // Ocultar automáticamente las alertas después de 5 segundos
+document.addEventListener("DOMContentLoaded", function() {
+    const btnHorizon = document.getElementById("btnHorizon");
+    {% if show_horizon_button and horizon_url %}
+        btnHorizon.style.display = "inline-block";
+        btnHorizon.href = "{{ horizon_url }}";
+    {% endif %}
+});
+</script>
+
+
+<script>
+document.getElementById("btnHistorial").addEventListener("click", function() {
+    fetch("/airdrop_history_ajax")
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("historialContent").innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById("historialContent").innerHTML = 
+                "<div class='alert alert-danger'>Error al cargar historial</div>";
+        });
+});
+</script>
+
+<script>
   setTimeout(function() {
     let alerts = document.querySelectorAll('.alert');
     alerts.forEach(function(alert) {
-      let bsAlert = new bootstrap.Alert(alert);
-      bsAlert.close();
+      alert.classList.remove('show');   // quita la clase "show"
+      alert.classList.add('fade');      // añade "fade" para animación
+      setTimeout(() => alert.remove(), 500); // elimina el nodo después de la animación
     });
   }, 5000);
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 
 </body>

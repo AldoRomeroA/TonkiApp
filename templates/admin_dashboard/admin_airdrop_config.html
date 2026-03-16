@@ -61,37 +61,38 @@
                     {% endif %}
 
                     <form method="POST" action="{{ url_for('configure_airdrop') }}">
-                    <div class="mb-3">
-                        <label for="monto" class="form-label">Monto total del airdrop (XLM)</label>
-                        <input type="number" step="0.0000001" name="monto" class="form-control"
-                            value="{{ config.monto if config else '' }}" required>
-                    </div>
+                        <div class="mb-3">
+                            <label for="monto" class="form-label">Monto total del airdrop (XLM)</label>
+                            <input type="number" step="0.0000001" name="monto" class="form-control"
+                                value="{{ config.amount if config else '' }}" required>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="fecha" class="form-label">Fecha programada</label>
-                        <input type="date" name="fecha" class="form-control"
-                            value="{{ config.fecha_programada if config else '' }}" required>
-                    </div>
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">Fecha programada</label>
+                            <input type="date" name="fecha" class="form-control"
+                                value="{{ config.scheduled_date if config else '' }}" required>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="periodicidad" class="form-label">Periodicidad (meses)</label>
-                        <select name="periodicidad" class="form-select">
-                        {% for i in range(1,13) %}
-                            <option value="{{ i }}" {% if config and config.periodicidad_meses == i %}selected{% endif %}>
-                            {{ i }} mes(es)
-                            </option>
-                        {% endfor %}
-                        </select>
-                    </div>
+                        <div class="mb-3">
+                            <label for="periodicidad" class="form-label">Periodicidad (meses)</label>
+                            <select name="periodicidad" class="form-select">
+                            {% for i in range(1,13) %}
+                                <option value="{{ i }}" {% if config and config.periodicity_months == i %}selected{% endif %}>
+                                    {{ i }} mes(es)
+                                </option>
+                            {% endfor %}
+                            </select>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="usuarios" class="form-label">Cantidad máxima de usuarios</label>
-                        <input type="number" name="usuarios" class="form-control"
-                            value="{{ config.max_usuarios if config else '' }}" required>
-                    </div>
+                        <div class="mb-3">
+                            <label for="usuarios" class="form-label">Cantidad máxima de usuarios</label>
+                            <input type="number" name="usuarios" class="form-control"
+                                value="{{ config.max_users if config else '' }}" required>
+                        </div>
 
-                    <button type="submit" class="btn btn-success">Guardar configuración</button>
+                        <button type="submit" class="btn btn-success">Guardar configuración</button>
                     </form>
+
                 </div>
             </div>
         </div>

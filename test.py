@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+"""from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from config import get_db_uri
 
@@ -19,7 +19,11 @@ def test_connection():
             for row in result:
                 print(row)
     except OperationalError as e:
-        print("❌ Error de conexión:", e)
+        print("❌ Error de conexión:", e)"""
+import uuid
+for i in range(10):
+    print(uuid.uuid4().hex)
+
 
 if __name__ == "__main__":
     test_connection()
