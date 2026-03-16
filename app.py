@@ -4,26 +4,30 @@ from extensions import db
 from config import get_db_uri
 import os
 from sqlalchemy import func
-from werkzeug.security import check_password_hash
 from functools import wraps
 import qrcode
 import io
 import base64
+import bcrypt
 
+from admin_dashboard.models import User, Reward, AirdropConfig, AirdropLog, Credential, Establishment
+import admin_dashboard.stellar_config
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = get_db_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = os.urandom(24) 
+app.secret_key = os.urandom(24)
+
+# Opciones para evitar "MySQL server has gone away"
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_pre_ping": True,       # verifica que la conexión esté viva
+    "pool_recycle": 1800,        # recicla conexiones cada 30 min
+    "pool_size": 5,              # tamaño del pool
+    "max_overflow": 10,          # conexiones extra permitidas
+    "pool_timeout": 30           # tiempo máximo de espera
+}
 
 db.init_app(app)
-#with app.app_context():
-#    db.create_all()
-
-
-from admin_dashboard.models import Usuario, Recompensa, AirdropConfig, AirdropLog, Credencial, Establecimiento
-import admin_dashboard.stellar_config
-
 
 def login_required(role="any"):
     def wrapper(fn):
@@ -33,12 +37,12 @@ def login_required(role="any"):
                 flash("Debes iniciar sesión primero", "warning")
                 return redirect(url_for("login"))
 
-            usuario = Usuario.query.filter_by(id_usuario=session["user_id"]).first()
+            usuario = User.query.filter_by(user_id=session["user_id"]).first()
             if not usuario:
                 flash("Usuario no encontrado", "danger")
                 return redirect(url_for("login"))
 
-            if role != "any" and usuario.tipo != role:
+            if role != "any" and usuario.type != role:
                 flash("No tienes permisos para acceder a esta página", "danger")
                 return redirect(url_for("dashboard_cliente"))
 
@@ -46,72 +50,166 @@ def login_required(role="any"):
         return decorated_view
     return wrapper
 
-@app.route('/configure_airdrop', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password'].encode('utf-8')
+
+        cred = Credential.query.filter_by(username=username).first()
+        if cred and bcrypt.checkpw(password, cred.password_hash.encode('utf-8')):
+            session['user_id'] = cred.user_id
+            session['username'] = cred.username
+
+            usuario = User.query.filter_by(user_id=cred.user_id).first()
+            if usuario.type == "admin":
+                flash("Bienvenido administrador", "success")
+                return redirect(url_for('dashboard_admin'))
+            else:
+                flash("Bienvenido cliente", "success")
+                return redirect(url_for('dashboard_cliente'))
+        else:
+            flash("Usuario o contraseña incorrectos", "danger")
+            return redirect(url_for('login'))
+
+    return render_template('login/login.html')
+
+@app.route('/dashboard_admin')
 @login_required(role="admin")
-def configure_airdrop():
+def dashboard_admin():
+    return render_template('admin_dashboard/admin_dashboard.html')
+
+@app.route('/dashboard_cliente')
+@login_required(role="cliente")
+def dashboard_cliente():
+    try:
+        id_usuario = session.get("user_id")
+        if not id_usuario:
+            flash("Debes iniciar sesión como cliente", "danger")
+            return redirect(url_for("login"))
+
+        resultados = (
+            db.session.query(
+                Establishment.name.label("establecimiento"),
+                func.sum(Reward.points).label("total_puntos")
+            )
+            .join(Reward, Establishment.establishment_id == Reward.establishment_id)
+            .filter(Reward.user_id == id_usuario)
+            .group_by(Establishment.name)
+            .order_by(func.sum(Reward.points).desc())
+            .all()
+        )
+
+        max_puntos = 0
+        establecimiento = None
+        fecha_airdrop = None
+
+        if resultados:
+            max_puntos = resultados[0].total_puntos
+            establecimiento = resultados[0].establecimiento
+
+            est = Establishment.query.filter_by(name=establecimiento).first()
+            if est:
+                config = AirdropConfig.query.filter_by(user_id=est.admin_id)\
+                                            .order_by(AirdropConfig.created_at.desc()).first()
+                if config:
+                    fecha_airdrop = config.scheduled_date
+
+        historial = (
+            db.session.query(
+                Reward.title,
+                Reward.description,
+                Reward.points,
+                Reward.created_at,
+                Establishment.name.label("establecimiento")
+            )
+            .join(Establishment, Reward.establishment_id == Establishment.establishment_id)
+            .filter(Reward.user_id == id_usuario)
+            .order_by(Reward.created_at.asc())
+            .all()
+        )
+
+        return render_template(
+            "user_dashboard/user_dashboard.html",
+            max_puntos=max_puntos,
+            establecimiento=establecimiento,
+            fecha_airdrop=fecha_airdrop,
+            historial=historial
+        )
+    except Exception as e:
+        flash(f"Error al cargar dashboard: {str(e)}", "danger")
+        return render_template("user_dashboard/user_dashboard.html",
+                               max_puntos=0, establecimiento=None, fecha_airdrop=None, historial=[])
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Has cerrado sesión correctamente", "success")
+    return redirect(url_for('login'))
+
+@app.route('/user_qr_data')
+@login_required(role="cliente")
+def user_qr_data():
+    id_usuario = session.get("user_id")
+    qr_url = url_for("assign_points", id_usuario=id_usuario, _external=True)
+
+    img = qrcode.make(qr_url)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    return {"qr_code": img_base64, "qr_url": qr_url}
+
+@app.route('/assign_points', methods=['GET', 'POST'])
+@login_required(role="admin")
+def assign_points():
     if request.method == 'POST':
         try:
-            monto = float(request.form['monto'])
-            fecha = request.form['fecha']
-            periodicidad = int(request.form['periodicidad'])
-            usuarios_max = int(request.form['usuarios'])
+            id_usuario = request.form['id_usuario']
+            puntos = int(request.form['puntos'])
+            titulo = request.form['titulo']
+            descripcion = request.form['descripcion']
+            id_establecimiento = request.form['id_establecimiento']
 
-            # Recuperar el usuario actual desde la sesión
-            id_usuario = session.get("user_id")
-            if not id_usuario:
-                flash("Debes iniciar sesión como administrador", "danger")
-                return redirect(url_for("login"))
-
-            # Si ya existe configuración, actualiza la última
-            config = AirdropConfig.query.filter_by(id_usuario=id_usuario)\
-                                        .order_by(AirdropConfig.creado_en.desc()).first()
-            if config:
-                config.monto = monto
-                config.fecha_programada = fecha
-                config.periodicidad_meses = periodicidad
-                config.max_usuarios = usuarios_max
-            else:
-                config = AirdropConfig(
-                    id_usuario=id_usuario,   # aquí asignamos el admin dueño
-                    monto=monto,
-                    fecha_programada=fecha,
-                    periodicidad_meses=periodicidad,
-                    max_usuarios=usuarios_max
-                )
-                db.session.add(config)
-
+            recompensa = Reward(
+                user_id=id_usuario,
+                establishment_id=id_establecimiento,
+                title=titulo,
+                description=descripcion,
+                points=puntos
+            )
+            db.session.add(recompensa)
             db.session.commit()
-            flash("Configuración guardada correctamente", "success")
-            return redirect(url_for('show_airdrop_page'))
-        except Exception as e:
-            flash(f"Error al guardar configuración: {str(e)}", "danger")
-            return redirect(url_for('show_airdrop_page'))
 
-    # GET → mostrar formulario con datos si existen
-    id_usuario = session.get("user_id")
-    config = None
-    if id_usuario:
-        config = AirdropConfig.query.filter_by(id_usuario=id_usuario)\
-                                    .order_by(AirdropConfig.creado_en.desc()).first()
-    return render_template("admin_dashboard/admin_airdrop_config.html", config=config)
+            flash("Puntos asignados correctamente", "success")
+            return redirect(url_for('dashboard_admin'))
+        except Exception as e:
+            flash(f"Error al asignar puntos: {str(e)}", "danger")
+            return redirect(url_for('dashboard_admin'))
+
+    establecimientos = Establishment.query.all()
+    return render_template("admin_dashboard/assign_points.html", establecimientos=establecimientos)
 
 @app.route('/send_airdrop')
 @login_required(role="admin")
 def send_airdrop():
     try:
-        total_puntos = db.session.query(func.coalesce(func.sum(Recompensa.puntos), 0)).scalar()
+        # Total de puntos acumulados en la plataforma
+        total_puntos = db.session.query(func.coalesce(func.sum(Reward.points), 0)).scalar()
 
+        # Consulta de usuarios con sus puntos y porcentaje del fondo
         usuarios = (
             db.session.query(
-                Usuario.id_usuario.label("ID"),
-                Usuario.nombre.label("Nombre"),
-                Usuario.wallet_address.label("Wallet"),
-                func.coalesce(func.sum(Recompensa.puntos), 0).label("Tonkis"),
-                (func.coalesce(func.sum(Recompensa.puntos), 0) * 100.0 / total_puntos).label("porcentaje_fondo")
+                User.user_id.label("ID"),
+                User.name.label("Nombre"),
+                User.wallet_address.label("Wallet"),
+                func.coalesce(func.sum(Reward.points), 0).label("Tonkis"),
+                (func.coalesce(func.sum(Reward.points), 0) * 100.0 / total_puntos).label("porcentaje_fondo")
             )
-            .outerjoin(Recompensa, Usuario.id_usuario == Recompensa.id_usuario)
-            .group_by(Usuario.id_usuario, Usuario.nombre, Usuario.wallet_address)
-            .order_by(func.sum(Recompensa.puntos).desc())
+            .outerjoin(Reward, User.user_id == Reward.user_id)
+            .group_by(User.user_id, User.name, User.wallet_address)
+            .order_by(func.sum(Reward.points).desc())
             .all()
         )
 
@@ -136,21 +234,21 @@ def send_airdrop():
         for u in usuarios:
             if u.Wallet:  # Solo si el usuario tiene wallet registrada
                 monto = (u.porcentaje_fondo / 100.0) * fondo_total
-                # Redondear a 7 decimales como requiere Stellar
-                monto_str = f"{monto:.7f}"
+                monto_str = f"{monto:.7f}"  # Stellar requiere 7 decimales
                 transaction_builder.append_payment_op(
                     destination=u.Wallet,
                     asset=Asset.native(),
                     amount=monto_str
                 )
 
+        # Construir y firmar la transacción
         transaction = transaction_builder.set_timeout(30).build()
         transaction.sign(source_keypair)
 
         print(transaction.to_xdr())
         response = server.submit_transaction(transaction)
 
-       # --- Mostrar el hash ---
+        # Mostrar el hash de la transacción
         tx_hash = response.get("hash")
         if tx_hash:
             flash(f"Transacción enviada con hash: {tx_hash}", "success")
@@ -165,43 +263,41 @@ def send_airdrop():
         )
 
     except Exception as e:
-        # Mostrar el error pero seguir mostrando el dashboard
         print(f"Error en la transacción: {str(e)}")
         flash(f'Error en la transacción: {str(e)}', 'danger')
-        # Retornar dashboard vacío en caso de error
         return render_template('admin_dashboard/admin_airdrop.html', usuarios=[])
-
 
 @app.route('/admin_airdrop')
 @login_required(role="admin")
 def show_airdrop_page():
     try:
-        total_puntos = db.session.query(func.coalesce(func.sum(Recompensa.puntos), 0)).scalar()
+        # Total de puntos acumulados
+        total_puntos = db.session.query(func.coalesce(func.sum(Reward.points), 0)).scalar()
 
         # Recuperar configuración del admin actual
         id_usuario = session.get("user_id")
         config = None
         if id_usuario:
-            config = AirdropConfig.query.filter_by(id_usuario=id_usuario)\
-                                        .order_by(AirdropConfig.creado_en.desc()).first()
+            config = AirdropConfig.query.filter_by(user_id=id_usuario)\
+                                        .order_by(AirdropConfig.created_at.desc()).first()
 
-        # Query base de usuarios con puntos
+        # Query base de usuarios con puntos y porcentaje del fondo
         query = (
             db.session.query(
-                Usuario.id_usuario.label("ID"),
-                Usuario.nombre.label("Nombre"),
-                Usuario.wallet_address.label("Wallet"),
-                func.coalesce(func.sum(Recompensa.puntos), 0).label("Tonkis"),
-                (func.coalesce(func.sum(Recompensa.puntos), 0) * 100.0 / total_puntos).label("porcentaje_fondo")
+                User.user_id.label("ID"),
+                User.name.label("Nombre"),
+                User.wallet_address.label("Wallet"),
+                func.coalesce(func.sum(Reward.points), 0).label("Tonkis"),
+                (func.coalesce(func.sum(Reward.points), 0) * 100.0 / total_puntos).label("porcentaje_fondo")
             )
-            .outerjoin(Recompensa, Usuario.id_usuario == Recompensa.id_usuario)
-            .group_by(Usuario.id_usuario, Usuario.nombre, Usuario.wallet_address)
-            .order_by(func.sum(Recompensa.puntos).desc())
+            .outerjoin(Reward, User.user_id == Reward.user_id)
+            .group_by(User.user_id, User.name, User.wallet_address)
+            .order_by(func.sum(Reward.points).desc())
         )
 
         # Aplicar límite si existe configuración
-        if config and config.max_usuarios:
-            usuarios = query.limit(config.max_usuarios).all()
+        if config and config.max_users:
+            usuarios = query.limit(config.max_users).all()
         else:
             usuarios = query.all()
 
@@ -228,193 +324,56 @@ def show_airdrop_page():
         return render_template('admin_dashboard/admin_airdrop.html', usuarios=[])
 
 
-
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        cred = Credencial.query.filter_by(username=username).first()
-        if cred and check_password_hash(cred.password_hash, password):
-            session['user_id'] = cred.id_usuario
-            session['username'] = cred.username
-
-            usuario = Usuario.query.filter_by(id_usuario=cred.id_usuario).first()
-            if usuario.tipo == "admin":
-                flash("Bienvenido administrador", "success")
-                return redirect(url_for('dashboard_admin'))
-            else:
-                flash("Bienvenido cliente", "success")
-                return redirect(url_for('dashboard_cliente'))
-        else:
-            flash("Usuario o contraseña incorrectos", "danger")
-            return redirect(url_for('login'))
-
-    return render_template('login/login.html')
-
-@app.route('/dashboard_admin')
+@app.route('/configure_airdrop', methods=['GET', 'POST'])
 @login_required(role="admin")
-def dashboard_admin():
-    return render_template('admin_dashboard/admin_dashboard.html')
-
-'''@app.route('/dashboard_cliente')
-@login_required(role="cliente")
-def dashboard_cliente():
-    return render_template('cliente_dashboard/cliente_dashboard.html')'''
-
-@app.route('/dashboard_cliente')
-@login_required(role="cliente")
-def dashboard_cliente():
-    try:
-        id_usuario = session.get("user_id")
-        print(f"[DEBUG] id_usuario en sesión: {id_usuario}")
-
-        if not id_usuario:
-            flash("Debes iniciar sesión como cliente", "danger")
-            return redirect(url_for("login"))
-
-        # Consulta: puntos por establecimiento del cliente
-        resultados = (
-            db.session.query(
-                Establecimiento.nombre.label("establecimiento"),
-                func.sum(Recompensa.puntos).label("total_puntos")
-            )
-            .join(Recompensa, Establecimiento.id_establecimiento == Recompensa.id_establecimiento)
-            .filter(Recompensa.id_usuario == id_usuario)
-            .group_by(Establecimiento.nombre)
-            .order_by(func.sum(Recompensa.puntos).desc())
-            .all()
-        )
-
-        print(f"[DEBUG] resultados query puntos: {resultados}")
-
-        max_puntos = 0
-        establecimiento = None
-        fecha_airdrop = None
-
-        if resultados:
-            max_puntos = resultados[0].total_puntos
-            establecimiento = resultados[0].establecimiento
-            print(f"[DEBUG] max_puntos: {max_puntos}, establecimiento: {establecimiento}")
-
-            # Buscar configuración del admin de ese establecimiento
-            est = Establecimiento.query.filter_by(nombre=establecimiento).first()
-            print(f"[DEBUG] establecimiento encontrado: {est}")
-            if est:
-                config = AirdropConfig.query.filter_by(id_usuario=est.id_admin)\
-                                            .order_by(AirdropConfig.creado_en.desc()).first()
-                print(f"[DEBUG] config encontrada: {config}")
-                if config:
-                    fecha_airdrop = config.fecha_programada
-                    print(f"[DEBUG] fecha_airdrop: {fecha_airdrop}")
-
-        # Historial de visitas
-        historial = (
-            db.session.query(
-                Recompensa.titulo,
-                Recompensa.descripcion,
-                Recompensa.puntos,
-                Recompensa.creado_en,
-                Establecimiento.nombre.label("establecimiento")
-            )
-            .join(Establecimiento, Recompensa.id_establecimiento == Establecimiento.id_establecimiento)
-            .filter(Recompensa.id_usuario == id_usuario)
-            .order_by(Recompensa.creado_en.asc())
-            .all()
-        )
-
-        print(f"[DEBUG] historial de visitas: {historial}")
-
-        return render_template(
-            "user_dashboard/user_dashboard.html",
-            max_puntos=max_puntos,
-            establecimiento=establecimiento,
-            fecha_airdrop=fecha_airdrop,
-            historial=historial
-        )
-    except Exception as e:
-        print(f"[ERROR] {str(e)}")
-        flash(f"Error al cargar dashboard: {str(e)}", "danger")
-        return render_template("user_dashboard/user_dashboard.html",
-                               max_puntos=0, establecimiento=None, fecha_airdrop=None, historial=[])
-
-@app.route('/wallet-login', methods=['POST'])
-def wallet_login():
-    # Redirige al dashboard cuando se conecta con wallet
-    return redirect('/dashboard')
-
-
-@app.route('/dashboard')
-@login_required(role="admin")
-def dashboard():
-    try:
-        return render_template('admin_dashboard/admin_dashboard.html')
-    except Exception as e:
-        # Mostrar el error pero seguir mostrando el dashboard
-        print(f"Error al conectar con la base de datos: {str(e)}")
-        flash(f'Error al conectar con la base de datos: {str(e)}', 'danger')
-        # Retornar dashboard vacío en caso de error
-        return render_template('admin_dashboard/admin_dashboard.html')
-
-@app.route('/logout')
-def logout():
-    # Eliminar todas las variables de sesión
-    session.clear()
-    flash("Has cerrado sesión correctamente", "success")
-    return redirect(url_for('login'))
-
-@app.route('/user_qr_data')
-@login_required(role="cliente")
-def user_qr_data():
-    id_usuario = session.get("user_id")
-    print(f"[DEBUG] Generando QR para usuario: {id_usuario}")
-
-    # URL que el admin vería al escanear
-    qr_url = url_for("assign_points", id_usuario=id_usuario, _external=True)
-    print(f"[DEBUG] URL embebida en QR: {qr_url}")
-
-    # Generar QR con esa URL
-    img = qrcode.make(qr_url)
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-
-    return {"qr_code": img_base64, "qr_url": qr_url}
-
-
-@app.route('/assign_points', methods=['GET', 'POST'])
-@login_required(role="admin")
-def assign_points():
+def configure_airdrop():
     if request.method == 'POST':
         try:
-            id_usuario = request.form['id_usuario']   # viene del QR escaneado
-            puntos = int(request.form['puntos'])
-            titulo = request.form['titulo']
-            descripcion = request.form['descripcion']
-            id_establecimiento = request.form['id_establecimiento']
+            amount = float(request.form['monto'])
+            scheduled_date = request.form['fecha']
+            periodicity = int(request.form['periodicidad'])
+            max_users = int(request.form['usuarios'])
 
-            recompensa = Recompensa(
-                id_usuario=id_usuario,
-                id_establecimiento=id_establecimiento,
-                titulo=titulo,
-                descripcion=descripcion,
-                puntos=puntos
-            )
-            db.session.add(recompensa)
+            # Recuperar el usuario actual desde la sesión
+            user_id = session.get("user_id")
+            if not user_id:
+                flash("Debes iniciar sesión como administrador", "danger")
+                return redirect(url_for("login"))
+
+            # Si ya existe configuración, actualiza la última
+            config = AirdropConfig.query.filter_by(user_id=user_id)\
+                                        .order_by(AirdropConfig.created_at.desc()).first()
+            if config:
+                config.amount = amount
+                config.scheduled_date = scheduled_date
+                config.periodicity_months = periodicity
+                config.max_users = max_users
+            else:
+                config = AirdropConfig(
+                    user_id=user_id,   # aquí asignamos el admin dueño
+                    amount=amount,
+                    scheduled_date=scheduled_date,
+                    periodicity_months=periodicity,
+                    max_users=max_users
+                )
+                db.session.add(config)
+
             db.session.commit()
-
-            flash("Puntos asignados correctamente", "success")
-            return redirect(url_for('dashboard_admin'))
+            flash("Configuración guardada correctamente", "success")
+            return redirect(url_for('show_airdrop_page'))
         except Exception as e:
-            flash(f"Error al asignar puntos: {str(e)}", "danger")
-            return redirect(url_for('dashboard_admin'))
+            flash(f"Error al guardar configuración: {str(e)}", "danger")
+            return redirect(url_for('show_airdrop_page'))
 
-    # GET → mostrar formulario
-    establecimientos = Establecimiento.query.all()
-    return render_template("admin_dashboard/assign_points.html", establecimientos=establecimientos)
+    # GET → mostrar formulario con datos si existen
+    user_id = session.get("user_id")
+    config = None
+    if user_id:
+        config = AirdropConfig.query.filter_by(user_id=user_id)\
+                                    .order_by(AirdropConfig.created_at.desc()).first()
+    return render_template("admin_dashboard/admin_airdrop_config.html", config=config)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
-    #app.run(ssl_context=("localhost+2.pem", "localhost+2-key.pem"))
