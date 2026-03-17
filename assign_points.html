@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Asignar Puntos - TonkiApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
+</head>
+<body class="gradient-bg">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#" style="color: var(--accent-action);">
+            <i class="bi bi-hexagon-fill" style="color: var(--accent-gold);"></i> TonkiApp
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard"><i class="bi bi-arrow-left"></i> Volver al Panel</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="text-center mb-4">
+                <div class="icon-box bg-white shadow-sm d-inline-flex mb-3" style="width: 70px; height: 70px; border-radius: 20px;">
+                    <i class="bi bi-plus-circle-fill fs-2" style="color: var(--accent-gold);"></i>
+                </div>
+                <h2 class="fw-bold" style="color: var(--accent-action);">Asignar Puntos a Cliente</h2>
+                <p class="text-muted">Ingresa los datos del escaneo de QR para sumar recompensas.</p>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="/assign_points">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="id_usuario" class="form-label fw-bold small">ID Usuario (del QR)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-upc-scan"></i></span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="id_usuario" name="id_usuario" placeholder="Ej. 45" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="id_establecimiento" class="form-label fw-bold small">Establecimiento</label>
+                                <select class="form-select bg-light" id="id_establecimiento" name="id_establecimiento" required>
+                                    <option value="" selected disabled>Seleccionar...</option>
+                                    {% for est in establecimientos %}
+                                    <option value="{{ est.id_establecimiento }}">{{ est.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="titulo" class="form-label fw-bold small">Concepto / Título</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" placeholder="Ej. Visita Semanal" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="descripcion" class="form-label fw-bold small">Descripción (Opcional)</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="2" placeholder="Detalles de la compra o servicio..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="puntos" class="form-label fw-bold small">Cantidad de Puntos a otorgar</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-star-fill text-warning"></i></span>
+                                <input type="number" class="form-control border-start-0 ps-0" id="puntos" name="puntos" placeholder="0" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-2">
+                            <button type="submit" class="btn btn-primary py-3 shadow-sm">
+                                <i class="bi bi-check2-circle me-2"></i> Confirmar Asignación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="small text-muted">
+                    <i class="bi bi-shield-lock me-1"></i> Esta acción es irreversible y quedará registrada en el historial del cliente.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bienvenido - TonkiApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
+    <style>
+        body.gradient-bg {
+            background-color: #f8f9fa; /* Fondo muy claro */
+        }
+        .login-card {
+            border: none;
+            border-radius: 24px;
+            background: #ffffff;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08) !important;
+            overflow: hidden;
+        }
+        .nav-tabs {
+            border-bottom: none !important;
+            background: #f0f2f5;
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .nav-tabs .nav-link {
+            border: none !important;
+            border-radius: 10px !important;
+            color: #636e72 !important;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .btn-wallet {
+            border: 1px solid #e5e7eb;
+            background: white;
+            color: #2d3436;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .btn-wallet:hover {
+            background: #f9fafb;
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+        .form-control {
+            border-radius: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body class="gradient-bg">
+
+<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card login-card p-4 text-center" style="max-width: 400px; width: 100%;">
+        
+        <div class="mb-4">
+            <img src="/static/img/logo_tonkiapp-short.jpeg" class="tiankawards-logo shadow-sm" alt="Logo" style="border-radius: 15px; width: 80px;">
+            <h4 class="fw-bold mt-3 mb-1">TonkiApp</h4>
+            <p class="text-muted small">Tu wallet de recompensas</p>
+        </div>
+
+        <ul class="nav nav-tabs mb-4 justify-content-center" id="loginTabs" role="tablist">
+            <li class="nav-item w-50" role="presentation">
+                <button class="nav-link active w-100" id="user-tab" data-bs-toggle="tab" data-bs-target="#user" type="button" role="tab">Usuario</button>
+            </li>
+            <li class="nav-item w-50" role="presentation">
+                <button class="nav-link w-100" id="wallet-tab" data-bs-toggle="tab" data-bs-target="#wallet" type="button" role="tab">Web3</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="user" role="tabpanel">
+                <form action="/" method="POST">
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-bold">Usuario</label>
+                        <input type="text" class="form-control" placeholder="Nombre de usuario" name="username" required>
+                    </div>
+                    <div class="mb-4 text-start">
+                        <label class="form-label small fw-bold">Contraseña</label>
+                        <input type="password" class="form-control" placeholder="••••••••" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-3 shadow-sm">
+                        Ingresar <i class="bi bi-arrow-right-short"></i>
+                    </button>
+                </form>
+                <p class="mt-4 small text-muted">¿Eres nuevo? <a href="#" class="text-dark fw-bold text-decoration-none">Regístrate aquí</a></p>
+            </div>
+
+            <div class="tab-pane fade" id="wallet" role="tabpanel">
+                <div class="d-flex flex-column">
+                    <button type="button" class="btn btn-wallet">
+                        <i class="bi bi-shield-check text-warning"></i> Metamask
+                    </button>
+                    <button type="button" class="btn btn-wallet">
+                        <i class="bi bi-lightning-charge text-primary"></i> Freighter
+                    </button>
+                    <button type="button" class="btn btn-wallet">
+                        <i class="bi bi-qr-code-scan text-info"></i> WalletConnect
+                    </button>
+                    <button type="button" class="btn btn-wallet">
+                        <i class="bi bi-currency-bitcoin text-secondary"></i> Coinbase
+                    </button>
+                </div>
+                <p class="mt-3 x-small text-muted" style="font-size: 0.75rem;">Al conectar tu wallet, aceptas nuestros términos de servicio.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

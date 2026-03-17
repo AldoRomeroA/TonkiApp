@@ -1,0 +1,144 @@
+/* TIANKAWARDS - REDISEÑO PROFESIONAL "UBER STYLE"
+   Desarrollado por Zumatek (Zumayinsky) para TonkiApp
+*/
+
+:root {
+  /* Paleta de Colores Claros y Profesionales */
+  --base-light: #F8F9FA;    /* Gris ultra claro para el fondo */
+  --base-white: #FFFFFF;    /* Blanco puro para tarjetas y nav */
+  --accent-gold: #FFD131;   /* El amarillo característico de Tonki */
+  --accent-action: #1A1A1A; /* Negro casi puro para botones y títulos */
+  --text-main: #2D3436;     /* Gris muy oscuro para lectura */
+  --text-muted: #636E72;    /* Gris para textos secundarios */
+  --border-color: #E9ECEF;  /* Color de bordes sutiles */
+  --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* ---------- Reset y Fondo Principal ---------- */
+body.gradient-bg {
+  background-color: var(--base-light);
+  background-image: none !important; /* Eliminamos el degradado oscuro anterior */
+  min-height: 100vh;
+  color: var(--text-main); 
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+}
+
+/* Quitamos texturas radiales oscuras */
+body.gradient-bg::before { display: none !important; }
+
+/* ---------- Navegación (Navbar) ---------- */
+.navbar {
+  background-color: var(--base-white) !important;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.8rem 1rem;
+}
+
+.navbar-brand {
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+}
+
+.nav-link {
+  color: var(--text-main) !important;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--accent-gold) !important;
+}
+
+/* ---------- Tarjetas (Cards) Estilo Uber ---------- */
+.card {
+  border-radius: 16px !important; /* Bordes muy redondeados */
+  background: var(--base-white);
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-soft) !important;
+  color: var(--text-main);
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ---------- Iconos con fondo (Stats) ---------- */
+.icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 55px;
+  height: 55px;
+  border-radius: 12px;
+}
+
+/* ---------- Logo ---------- */
+.tiankawards-logo {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  border-radius: 18px;
+  background: transparent;
+  display: block;
+  margin: 0 auto 1.5rem auto;
+}
+
+/* ---------- Pestañas (Tabs Segmentadas) ---------- */
+.nav-tabs {
+  background: #EDF0F3;
+  padding: 5px;
+  border-radius: 14px;
+  display: inline-flex;
+  gap: 5px;
+  border: none !important;
+}
+
+.nav-tabs .nav-link {
+  color: var(--text-muted) !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 25px !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--text-main) !important;
+  background-color: var(--base-white) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+/* ---------- Botones Profesionales ---------- */
+.btn-primary {
+  background-color: var(--accent-action) !important;
+  border-color: var(--accent-action) !important;
+  border-radius: 10px !important;
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: transform 0.2s;
+}
+
+.btn-primary:hover {
+  transform: scale(1.02);
+  background-color: #000 !important;
+}
+
+/* ---------- Utilidades de Texto ---------- */
+.fs-3, .fs-1 { 
+  color: var(--accent-action); 
+  font-weight: 800 !important; 
+}
+
+.text-muted, .text-white-50 {
+  color: var(--text-muted) !important;
+}
+
+.table-id-color {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
