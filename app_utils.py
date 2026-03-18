@@ -6,15 +6,13 @@ from flask_mail import Mail, Message
 from mnemonic import Mnemonic
 from stellar_sdk import Keypair
 
-# Asegúrate de tener 'mail' disponible aquí (ver punto 1)
-
 
 def send_security_email(
     mail_obj, user_email, user_name, public_key, private_key, mnemonic
 ):
     msg = Message(
         "Registro Exitoso - Información de Seguridad Importante",
-        sender="mariconaxel847@gmail.com",
+        sender="support@tonki.io",
         recipients=[user_email],
     )
     msg.body = f"""

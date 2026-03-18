@@ -26,7 +26,9 @@
                 --card-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.7);
                 --success-green: #4caf50;
                 --error-red: #ff5252;
+                --error-red-light: rgba(255, 82, 82, 0.15);
                 --info-blue: #64b5f6;
+                --warning-orange: #ffb74d;
             }
 
             /* ------- Fondo principal con degradado ------- */
@@ -161,6 +163,7 @@
                 flex-direction: column;
                 margin-bottom: 1.8rem;
                 gap: 0.5rem;
+                position: relative;
             }
 
             .form-label {
@@ -199,6 +202,32 @@
                 color: rgba(255, 255, 255, 0.3);
                 font-weight: 300;
                 font-size: 0.95rem;
+            }
+
+            /* Clase para campos con error */
+            .form-input.input-error {
+                border-color: var(--error-red);
+                background: var(--error-red-light);
+                box-shadow: 0 0 0 2px rgba(255, 82, 82, 0.3);
+            }
+
+            .form-input.input-error:focus {
+                border-color: var(--error-red);
+                box-shadow: 0 0 0 4px rgba(255, 82, 82, 0.3);
+            }
+
+            /* Mensaje de error específico para campo */
+            .field-error-message {
+                color: var(--error-red);
+                font-size: 0.75rem;
+                margin-left: 0.5rem;
+                margin-top: 0.25rem;
+                font-weight: 500;
+                display: none;
+            }
+
+            .field-error-message.visible {
+                display: block;
             }
 
             /* ------- Botón principal ------- */
@@ -252,6 +281,41 @@
                 box-shadow: 0 8px 20px rgba(255, 105, 51, 0.4);
             }
 
+            /* Estado deshabilitado del botón */
+            .btn-submit:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: 0 5px 15px rgba(255, 105, 51, 0.2);
+            }
+
+            .btn-submit:disabled:hover {
+                transform: none;
+            }
+
+            .btn-submit:disabled::before {
+                display: none;
+            }
+
+            /* Spinner de carga */
+            .spinner {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                border-top-color: var(--white);
+                animation: spin 0.8s linear infinite;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
             /* ------- Separador decorativo ------- */
             .form-divider {
                 height: 1px;
@@ -303,6 +367,12 @@
                 background: rgba(100, 181, 246, 0.1);
             }
 
+            .result-box.warning {
+                border-color: var(--warning-orange);
+                color: #ffe0b2;
+                background: rgba(255, 180, 77, 0.1);
+            }
+
             /* ------- Ajustes de texto ------- */
             .fs-3,
             .fs-6 {
@@ -341,18 +411,20 @@
                     alt="Tiankawards"
                 />
 
-                <h3>✨ Crear Usuario</h3>
+                <h3>Crear Usuario</h3>
 
-                <form id="createUserForm">
+                <form id="createUserForm" novalidate>
                     <div class="form-group">
                         <label class="form-label">Nombre completo</label>
                         <input
                             type="text"
                             name="name"
+                            id="name"
                             class="form-input"
                             placeholder="ej. Ana Pérez Martínez"
                             required
                         />
+                        <div id="name-error" class="field-error-message"></div>
                     </div>
 
                     <div class="form-group">
@@ -360,10 +432,12 @@
                         <input
                             type="email"
                             name="email"
+                            id="email"
                             class="form-input"
                             placeholder="tú@ejemplo.com"
                             required
                         />
+                        <div id="email-error" class="field-error-message"></div>
                     </div>
 
                     <div class="form-group">
@@ -371,17 +445,22 @@
                         <input
                             type="password"
                             name="password"
+                            id="password"
                             class="form-input"
                             placeholder="mínimo 8 caracteres"
                             required
                             minlength="8"
                         />
+                        <div
+                            id="password-error"
+                            class="field-error-message"
+                        ></div>
                     </div>
 
                     <div class="form-divider"></div>
 
-                    <button type="submit" class="btn-submit">
-                        🚀 CREAR CUENTA
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        CREAR CUENTA
                     </button>
                 </form>
 
@@ -396,122 +475,340 @@
             (function () {
                 const form = document.getElementById("createUserForm");
                 const resultDiv = document.getElementById("result");
+                const submitBtn = document.getElementById("submitBtn");
+
+                // Elementos de campos
+                const nameInput = document.getElementById("name");
+                const emailInput = document.getElementById("email");
+                const passwordInput = document.getElementById("password");
+
+                // Elementos de mensajes de error por campo
+                const nameError = document.getElementById("name-error");
+                const emailError = document.getElementById("email-error");
+                const passwordError = document.getElementById("password-error");
+
+                // Estado para prevenir múltiples envíos
+                let isSubmitting = false;
+                let submitTimeout = null;
+
+                // Mapeo de mensajes amigables para el usuario
+                const userMessages = {
+                    // Errores generales
+                    missing_fields:
+                        "Por favor, completa todos los campos requeridos.",
+                    connection_error:
+                        "🔌 Error de conexión. Verifica tu internet o inténtalo más tarde.",
+                    timeout_error:
+                        "⏱️ El servidor está tardando demasiado. Inténtalo de nuevo.",
+                    server_error:
+                        "🔧 Error interno del servidor. Ya lo estamos revisando.",
+
+                    // Errores específicos del backend
+                    password_too_short:
+                        "La contraseña debe tener al menos 8 caracteres.",
+                    email_exists:
+                        "⚠️ Este correo electrónico ya está registrado. ¿Olvidaste tu contraseña?",
+                    database_error:
+                        "Error al crear tu cuenta. Por favor, inténtalo más tarde.",
+                    email_sending_error:
+                        "Cuenta creada pero no se pudo enviar el correo. Contacta a soporte.",
+
+                    // Errores por campo
+                    field_name:
+                        "Por favor, ingresa un nombre válido (mínimo 2 caracteres).",
+                    field_email:
+                        "Ingresa un correo electrónico válido (ej: nombre@dominio.com).",
+                    field_password:
+                        "La contraseña debe tener mínimo 8 caracteres.",
+                };
+
+                // Función para limpiar errores de campos
+                function clearFieldErrors() {
+                    [nameInput, emailInput, passwordInput].forEach((input) => {
+                        input.classList.remove("input-error");
+                    });
+                    [nameError, emailError, passwordError].forEach(
+                        (errorEl) => {
+                            errorEl.textContent = "";
+                            errorEl.classList.remove("visible");
+                        },
+                    );
+                }
+
+                // Función para mostrar error en campo específico
+                function showFieldError(field, message) {
+                    const inputMap = {
+                        name: nameInput,
+                        email: emailInput,
+                        password: passwordInput,
+                    };
+
+                    const errorMap = {
+                        name: nameError,
+                        email: emailError,
+                        password: passwordError,
+                    };
+
+                    if (inputMap[field] && errorMap[field]) {
+                        inputMap[field].classList.add("input-error");
+                        errorMap[field].textContent = message;
+                        errorMap[field].classList.add("visible");
+                    }
+                }
 
                 // Función para mostrar mensajes personalizados
                 function showMessage(message, type = "info") {
                     resultDiv.textContent = message;
-                    // remover clases anteriores y añadir la nueva
-                    resultDiv.classList.remove("success", "error", "info");
+                    resultDiv.classList.remove(
+                        "success",
+                        "error",
+                        "info",
+                        "warning",
+                    );
                     resultDiv.classList.add(type);
+                }
+
+                // Función para manejar el estado de carga
+                function setLoading(isLoading, customMessage = null) {
+                    isSubmitting = isLoading;
+
+                    if (isLoading) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML =
+                            '<span class="spinner"></span> CREANDO CUENTA...';
+                        if (customMessage) {
+                            showMessage(customMessage, "info");
+                        }
+
+                        // Timeout de seguridad (10 segundos)
+                        submitTimeout = setTimeout(() => {
+                            if (isSubmitting) {
+                                setLoading(false);
+                                showMessage(
+                                    userMessages.timeout_error,
+                                    "warning",
+                                );
+                            }
+                        }, 10000);
+                    } else {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = "CREAR CUENTA";
+                        if (submitTimeout) {
+                            clearTimeout(submitTimeout);
+                            submitTimeout = null;
+                        }
+                    }
                 }
 
                 // Validación básica antes de enviar
                 function validateForm(data) {
+                    let isValid = true;
+                    clearFieldErrors();
+
                     if (data.name.length < 2) {
-                        return "❌ El nombre debe tener al menos 2 caracteres";
+                        showFieldError("name", userMessages.field_name);
+                        isValid = false;
                     }
+
                     if (
                         !data.email.includes("@") ||
-                        !data.email.includes(".")
+                        !data.email.includes(".") ||
+                        data.email.length < 5
                     ) {
-                        return "❌ Ingresa un correo electrónico válido";
+                        showFieldError("email", userMessages.field_email);
+                        isValid = false;
                     }
+
                     if (data.password.length < 8) {
-                        return "❌ La contraseña debe tener mínimo 8 caracteres";
+                        showFieldError("password", userMessages.field_password);
+                        isValid = false;
                     }
-                    return null;
+
+                    return isValid;
+                }
+
+                // Función para interpretar errores del backend
+                function handleBackendError(response, result) {
+                    // Limpiar errores anteriores
+                    clearFieldErrors();
+
+                    // Mapear errores según el texto del mensaje
+                    const errorMessage = result.error?.toLowerCase() || "";
+                    const detailsMessage = result.details?.toLowerCase() || "";
+
+                    // Email duplicado
+                    if (
+                        errorMessage.includes("correo en uso") ||
+                        detailsMessage.includes("existente")
+                    ) {
+                        showFieldError("email", userMessages.email_exists);
+                        showMessage(userMessages.email_exists, "error");
+                    }
+                    // Contraseña corta
+                    else if (
+                        errorMessage.includes("corta") ||
+                        errorMessage.includes("min")
+                    ) {
+                        showFieldError(
+                            "password",
+                            userMessages.password_too_short,
+                        );
+                        showMessage(userMessages.password_too_short, "error");
+                    }
+                    // Campos faltantes
+                    else if (errorMessage.includes("faltan campos")) {
+                        showMessage(userMessages.missing_fields, "error");
+
+                        // Intentar identificar qué campos faltan
+                        if (result.details) {
+                            if (result.details.includes("name"))
+                                showFieldError("name", "Campo requerido");
+                            if (result.details.includes("email"))
+                                showFieldError("email", "Campo requerido");
+                            if (result.details.includes("password"))
+                                showFieldError("password", "Campo requerido");
+                        }
+                    }
+                    // Error de base de datos
+                    else if (
+                        errorMessage.includes("base de datos") ||
+                        result.error?.includes("database")
+                    ) {
+                        showMessage(userMessages.database_error, "error");
+                    }
+                    // Error genérico
+                    else {
+                        // Si hay un mensaje específico del backend, lo usamos
+                        const userMsg =
+                            result.details ||
+                            result.error ||
+                            "Error al procesar la solicitud";
+                        showMessage(`❌ ${userMsg}`, "error");
+                    }
                 }
 
                 form.addEventListener("submit", async (e) => {
                     e.preventDefault();
 
-                    const data = {
-                        name: form.name.value.trim(),
-                        email: form.email.value.trim(),
-                        password: form.password.value,
-                    };
-
-                    // Validar localmente
-                    const validationError = validateForm(data);
-                    if (validationError) {
-                        showMessage(validationError, "error");
+                    // Prevenir múltiples envíos
+                    if (isSubmitting) {
+                        showMessage(
+                            "⏳ Ya hay una solicitud en proceso...",
+                            "info",
+                        );
                         return;
                     }
 
-                    // Mensaje de carga
-                    showMessage("⏳ Creando tu cuenta...", "info");
+                    const data = {
+                        name: nameInput.value.trim(),
+                        email: emailInput.value.trim(),
+                        password: passwordInput.value,
+                    };
+
+                    // Validar localmente
+                    if (!validateForm(data)) {
+                        showMessage(
+                            "Por favor, corrige los errores en el formulario.",
+                            "error",
+                        );
+                        return;
+                    }
+
+                    // Limpiar errores anteriores y mostrar carga
+                    clearFieldErrors();
+                    setLoading(true, "⏳ Creando tu cuenta...");
 
                     try {
-                        // Simular llamada al backend (fetch real)
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(
+                            () => controller.abort(),
+                            10000,
+                        );
+
                         const response = await fetch("/create_user", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                             },
                             body: JSON.stringify(data),
+                            signal: controller.signal,
                         });
+
+                        clearTimeout(timeoutId);
 
                         const result = await response.json();
 
+                        // Quitar estado de carga
+                        setLoading(false);
+
                         // Mensajes personalizados basados en la respuesta
-                        if (response.ok) {
-                            if (result.success || result.message) {
-                                // Mensaje de éxito personalizado
-                                const userName = data.name.split(" ")[0]; // primer nombre
+                        if (response.ok && result.success) {
+                            const userName = data.name.split(" ")[0]; // primer nombre
+
+                            // Verificar si el correo se envió correctamente
+                            if (
+                                result.message &&
+                                result.message.includes("correo enviado")
+                            ) {
                                 showMessage(
-                                    `🎉 ¡Felicidades ${userName}! Tu cuenta ha sido creada exitosamente.\n🔑 Bienvenido a Tiankawards.`,
+                                    `🎉 ¡Felicidades ${userName}! Tu cuenta ha sido creada exitosamente.\n📧 Revisa tu correo para obtener tus credenciales.`,
                                     "success",
                                 );
                             } else {
                                 showMessage(
-                                    "✅ Usuario registrado correctamente",
-                                    "success",
+                                    `✅ ¡Felicidades ${userName}! Tu cuenta fue creada, pero tuvimos problemas para enviar el correo.\nContacta a soporte para obtener tus credenciales.`,
+                                    "warning",
                                 );
                             }
+
+                            // Opcional: limpiar formulario
+                            // form.reset();
                         } else {
-                            // Mensaje de error personalizado según el código
-                            if (response.status === 409) {
-                                showMessage(
-                                    "⚠️ Este correo electrónico ya está registrado.\n¿Olvidaste tu contraseña?",
-                                    "error",
-                                );
-                            } else if (response.status === 400) {
-                                showMessage(
-                                    "❌ Datos inválidos. Revisa la información.",
-                                    "error",
-                                );
-                            } else {
-                                showMessage(
-                                    `❌ Error ${response.status}: ${result.message || "No se pudo crear el usuario"}`,
-                                    "error",
-                                );
-                            }
+                            // Manejar errores del backend
+                            handleBackendError(response, result);
                         }
                     } catch (error) {
-                        // Mensaje de error de conexión personalizado
-                        showMessage(
-                            "🔌 Error de conexión con el servidor.\nVerifica tu internet o inténtalo más tarde.",
-                            "error",
-                        );
+                        setLoading(false);
+
+                        // Manejar error de timeout o conexión
+                        if (error.name === "AbortError") {
+                            showMessage(userMessages.timeout_error, "warning");
+                        } else {
+                            showMessage(userMessages.connection_error, "error");
+                        }
                         console.error("Error:", error);
                     }
                 });
 
-                // Mensajes de ayuda en los campos (opcional)
+                // Mensajes de ayuda en los campos (focus)
                 const inputs = document.querySelectorAll(".form-input");
                 inputs.forEach((input) => {
                     input.addEventListener("focus", () => {
-                        if (input.name === "password") {
+                        // Limpiar error del campo cuando el usuario hace focus
+                        if (input.classList.contains("input-error")) {
+                            const fieldName = input.id;
+                            const errorEl = document.getElementById(
+                                `${fieldName}-error`,
+                            );
+                            if (errorEl) {
+                                input.classList.remove("input-error");
+                                errorEl.textContent = "";
+                                errorEl.classList.remove("visible");
+                            }
+                        }
+
+                        // Mostrar mensaje de ayuda
+                        if (input.id === "password") {
                             showMessage(
-                                "🔐 La contraseña debe tener al menos 8 caracteres",
+                                "🔐 Mínimo 8 caracteres. Usa letras y números para mayor seguridad.",
                                 "info",
                             );
-                        } else if (input.name === "email") {
+                        } else if (input.id === "email") {
                             showMessage(
                                 "📧 Ejemplo: nombre@dominio.com",
                                 "info",
                             );
-                        } else if (input.name === "name") {
+                        } else if (input.id === "name") {
                             showMessage(
                                 "📝 Ingresa tu nombre completo",
                                 "info",
@@ -520,13 +817,14 @@
                     });
                 });
 
-                // Restaurar mensaje inicial al salir de los campos
+                // Restaurar mensaje inicial al salir de los campos si no hay error
                 inputs.forEach((input) => {
                     input.addEventListener("blur", () => {
                         if (
                             !document.activeElement.classList.contains(
                                 "form-input",
-                            )
+                            ) &&
+                            !isSubmitting
                         ) {
                             showMessage(
                                 "👋 ¡Bienvenido! Completa el formulario para registrarte.",
@@ -534,6 +832,13 @@
                             );
                         }
                     });
+                });
+
+                // Prevenir envío con Enter si ya está enviando
+                form.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" && isSubmitting) {
+                        e.preventDefault();
+                    }
                 });
             })();
         </script>

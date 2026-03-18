@@ -46,13 +46,14 @@ app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.urandom(24)
 
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USE_SSL"] = False
-app.config["MAIL_USERNAME"] = "mariconaxel847@gmail.com"
-app.config["MAIL_PASSWORD"] = "mxgorfqzsfiwdjxq"
-app.config["MAIL_DEFAULT_SENDER"] = "mariconaxel847@gmail.com"
+app.config["MAIL_SERVER"] = "smtp.hostinger.com"
+app.config["MAIL_PORT"] = 465
+app.config["MAIL_USE_TLS"] = False
+app.config["MAIL_USE_SSL"] = True
+app.config["MAIL_USERNAME"] = "support@tonki.io"
+app.config["MAIL_PASSWORD"] = "2026@A.Arroyo"
+app.config["MAIL_DEFAULT_SENDER"] = "support@tonki.io"
+app.config["MAIL_DEBUG"] = True
 
 # Opciones para evitar "MySQL server has gone away"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
