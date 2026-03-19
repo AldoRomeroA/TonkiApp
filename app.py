@@ -92,9 +92,9 @@ def login_required(role="any"):
     return wrapper
 
 
-@app.route("/render_create_user", methods=["GET"])
+@app.route("/register_user", methods=["GET"])
 def render_create_user():
-    return render_template("new_user_registration/new_user_registration.html")
+    return render_template("login/new_user_registration.html")
 
 
 @app.route("/create_user", methods=["POST"])
