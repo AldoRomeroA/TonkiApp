@@ -109,5 +109,10 @@ class AirdropLog(db.Model):
     success = db.Column(db.Boolean, default=True)
     error_message = db.Column(db.String(255), nullable=True)
     response_json = db.Column(db.Text, nullable=True)
+    user_id = db.Column(db.String(32), db.ForeignKey('User.user_id'), nullable=False)
+    establishment_id = db.Column(db.String(32), db.ForeignKey('Establishment.establishment_id'), nullable=False)
 
     config = db.relationship("AirdropConfig", back_populates="logs")
+    user = db.relationship("User", backref="airdrop_logs")
+    establishment = db.relationship("Establishment", backref="airdrop_logs")
+

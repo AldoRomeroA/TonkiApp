@@ -3,9 +3,9 @@ import io
 import os
 import uuid
 from functools import wraps
-
 import bcrypt
 import qrcode
+
 from flask import (
     Flask,
     flash,
@@ -17,11 +17,16 @@ from flask import (
     session,
     url_for,
 )
+
 from flask_mail import Mail, Message
 from sqlalchemy import func
 from stellar_sdk import Asset, Keypair, Network, Server, TransactionBuilder
+import uuid
+import json
+from datetime import datetime, timezone
 
 import admin_dashboard.stellar_config
+
 from admin_dashboard.models import (
     AirdropConfig,
     AirdropLog,
@@ -30,6 +35,7 @@ from admin_dashboard.models import (
     Reward,
     User,
 )
+
 from app_utils import (
     generate_keypair,
     generate_uuid,
@@ -37,6 +43,7 @@ from app_utils import (
     mnemonic_phrase,
     send_security_email,
 )
+
 from config import get_db_uri
 from DB_logic import check_email_exists_db, create_credentials_db, create_user_db
 from extensions import db
@@ -218,8 +225,8 @@ def dashboard_admin():
 @login_required(role="cliente")
 def dashboard_cliente():
     try:
-        id_usuario = session.get("user_id")
-        if not id_usuario:
+        user_id = session.get("user_id")
+        if not user_id:
             flash("Debes iniciar sesión como cliente", "danger")
             return redirect(url_for("login"))
 
@@ -229,7 +236,7 @@ def dashboard_cliente():
                 func.sum(Reward.points).label("total_puntos"),
             )
             .join(Reward, Establishment.establishment_id == Reward.establishment_id)
-            .filter(Reward.user_id == id_usuario)
+            .filter(Reward.user_id == user_id)
             .group_by(Establishment.name)
             .order_by(func.sum(Reward.points).desc())
             .all()
@@ -264,7 +271,8 @@ def dashboard_cliente():
             .join(
                 Establishment, Reward.establishment_id == Establishment.establishment_id
             )
-            .filter(Reward.user_id == id_usuario)
+            .join(Establishment, Reward.establishment_id == Establishment.establishment_id)
+            .filter(Reward.user_id == user_id)
             .order_by(Reward.created_at.asc())
             .all()
         )
@@ -297,8 +305,8 @@ def logout():
 @app.route("/user_qr_data")
 @login_required(role="cliente")
 def user_qr_data():
-    id_usuario = session.get("user_id")
-    qr_url = url_for("assign_points", id_usuario=id_usuario, _external=True)
+    user_id = session.get("user_id")
+    qr_url = url_for("assign_points", user_id=user_id, _external=True)
 
     img = qrcode.make(qr_url)
     buf = io.BytesIO()
@@ -314,14 +322,19 @@ def user_qr_data():
 def assign_points():
     if request.method == "POST":
         try:
-            id_usuario = request.form["id_usuario"]
-            puntos = int(request.form["puntos"])
-            titulo = request.form["titulo"]
-            descripcion = request.form["descripcion"]
-            id_establecimiento = request.form["id_establecimiento"]
+            #id_usuario = request.form["id_usuario"]
+            #puntos = int(request.form["puntos"])
+            #titulo = request.form["titulo"]
+            #descripcion = request.form["descripcion"]
+            #id_establecimiento = request.form["id_establecimiento"]
+            user_id = request.form['user_id']
+            puntos = int(request.form['puntos'])
+            titulo = request.form['titulo']
+            descripcion = request.form['descripcion']
+            id_establecimiento = request.form['id_establecimiento']
 
             recompensa = Reward(
-                user_id=id_usuario,
+                user_id=user_id,
                 establishment_id=id_establecimiento,
                 title=titulo,
                 description=descripcion,
@@ -342,7 +355,7 @@ def assign_points():
     )
 
 
-@app.route("/send_airdrop")
+"""@app.route('/send_airdrop')
 @login_required(role="admin")
 def send_airdrop():
     try:
@@ -419,8 +432,145 @@ def send_airdrop():
 
     except Exception as e:
         print(f"Error en la transacción: {str(e)}")
-        flash(f"Error en la transacción: {str(e)}", "danger")
-        return render_template("admin_dashboard/admin_airdrop.html", usuarios=[])
+        flash(f'Error en la transacción: {str(e)}', 'danger')
+        return render_template('admin_dashboard/admin_airdrop.html', usuarios=[])"""
+
+@app.route('/send_airdrop')
+@login_required(role="admin")
+def send_airdrop():
+    try:
+        # Total de puntos acumulados en la plataforma
+        total_puntos = db.session.query(func.coalesce(func.sum(Reward.points), 0)).scalar()
+
+        # Recuperar configuración del admin actual
+        user_id = session.get("user_id")
+        config = None
+        if user_id:
+            config = AirdropConfig.query.filter_by(user_id=user_id)\
+                                        .order_by(AirdropConfig.created_at.desc()).first()
+
+        # Recuperar establecimiento asociado al admin
+        establecimiento = None
+        if user_id:
+            establecimiento = Establishment.query.filter_by(admin_id=user_id).first()
+
+        # Consulta de usuarios con sus puntos y porcentaje del fondo
+        usuarios = (
+            db.session.query(
+                User.user_id.label("ID"),
+                User.name.label("Nombre"),
+                User.wallet_address.label("Wallet"),
+                func.coalesce(func.sum(Reward.points), 0).label("Tonkis"),
+                (func.coalesce(func.sum(Reward.points), 0) * 100.0 / total_puntos).label("porcentaje_fondo")
+            )
+            .outerjoin(Reward, User.user_id == Reward.user_id)
+            .group_by(User.user_id, User.name, User.wallet_address)
+            .having(func.coalesce(func.sum(Reward.points), 0) >= 1)
+            .filter(User.type != "admin")
+            .order_by(func.sum(Reward.points).desc())
+            .all()
+        )
+
+        # Configuración de Stellar
+        server = Server(admin_dashboard.stellar_config.STELLAR_HORIZON)
+        source_keypair = Keypair.from_secret(admin_dashboard.stellar_config.STELLAR_SECRET)
+        source_public_key = source_keypair.public_key
+        source_account = server.load_account(source_public_key)
+        account_data = server.accounts().account_id(source_public_key).call()
+        balance = account_data['balances'][0]['balance']
+
+        # Fondo total a repartir
+        fondo_total = float(config.amount) if config and config.amount else 100.0
+
+        # Construcción de la transacción
+        transaction_builder = TransactionBuilder(
+            source_account=source_account,
+            network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+            base_fee=100
+        )
+
+        total_enviado = 0.0
+        for u in usuarios:
+            destino = u.Wallet if u.Wallet else "GB6GI6BSNQ6MXYT6YNM6GWZKQNPMILPE7GIQ2FWDCVM2RPU6Z3XO4DPT"
+            monto = (u.porcentaje_fondo / 100.0) * fondo_total
+            total_enviado += monto
+            monto_str = f"{monto:.7f}"
+            transaction_builder.append_payment_op(
+                destination=destino,
+                asset=Asset.native(),
+                amount=monto_str
+            )
+
+        transaction = transaction_builder.set_timeout(30).build()
+        transaction.sign(source_keypair)
+
+        response = server.submit_transaction(transaction)
+
+        # Extraer datos de la respuesta
+        tx_hash = response.get("hash")
+        success = True if tx_hash else False
+        error_message = None if success else str(response)
+        response_json = json.dumps(response)
+
+        # Guardar log en BD con user_id y establishment_id
+        log = AirdropLog(
+            log_id=str(uuid.uuid4().hex),
+            config_id=config.config_id if config else None,
+            transaction_hash=tx_hash,
+            total_amount=round(total_enviado, 7),
+            users_involved=len(usuarios),
+            executed_at=datetime.now(timezone.utc),
+            success=success,
+            error_message=error_message,
+            response_json=response_json,
+            user_id=user_id,
+            establishment_id=establecimiento.establishment_id if establecimiento else None
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        if tx_hash:
+            horizon_url = f"{admin_dashboard.stellar_config.STELLAR_HORIZON}/transactions/{tx_hash}"
+            flash("Transacción enviada con éxito", "success")
+            return render_template(
+                'admin_dashboard/admin_airdrop.html',
+                usuarios=usuarios,
+                balance=balance,
+                source_public_key=source_public_key,
+                tx_hash=tx_hash,
+                horizon_url=horizon_url,
+                show_horizon_button=True
+            )
+
+        else:
+            flash("Transacción ejecutada pero sin hash válido", "warning")
+            return render_template(
+                'admin_dashboard/admin_airdrop.html',
+                usuarios=usuarios,
+                balance=balance,
+                source_public_key=source_public_key
+            )
+
+    except Exception as e:
+        # Guardar log de error con user_id y establecimiento
+        log = AirdropLog(
+            log_id=str(uuid.uuid4().hex),
+            config_id=config.config_id if config else None,
+            transaction_hash=None,
+            total_amount=fondo_total if config else 0,
+            users_involved=len(usuarios) if 'usuarios' in locals() else 0,
+            executed_at=datetime.now(timezone.utc),
+            success=False,
+            error_message=str(e),
+            response_json=None,
+            user_id=user_id if 'user_id' in locals() else None,
+            establishment_id=establecimiento.establishment_id if 'establecimiento' in locals() and establecimiento else None
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        flash(f"Error al enviar airdrop: {str(e)}", "danger")
+        return redirect(url_for("show_airdrop_page"))
 
 
 @app.route("/admin_airdrop")
@@ -433,14 +583,11 @@ def show_airdrop_page():
         ).scalar()
 
         # Recuperar configuración del admin actual
-        id_usuario = session.get("user_id")
+        user_id = session.get("user_id")
         config = None
-        if id_usuario:
-            config = (
-                AirdropConfig.query.filter_by(user_id=id_usuario)
-                .order_by(AirdropConfig.created_at.desc())
-                .first()
-            )
+        if user_id:
+            config = AirdropConfig.query.filter_by(user_id=user_id)\
+                .order_by(AirdropConfig.created_at.desc()).first()
 
         # Query base de usuarios con puntos y porcentaje del fondo
         query = (
@@ -455,14 +602,16 @@ def show_airdrop_page():
             )
             .outerjoin(Reward, User.user_id == Reward.user_id)
             .group_by(User.user_id, User.name, User.wallet_address)
+            .having(func.coalesce(func.sum(Reward.points), 0) >= 1)   # excluir usuarios con menos de 1 punto
+            .filter(User.type != "admin")                             # excluir admins
             .order_by(func.sum(Reward.points).desc())
         )
 
-        # Aplicar límite si existe configuración
+        # Aplicar límite
         if config and config.max_users:
             usuarios = query.limit(config.max_users).all()
         else:
-            usuarios = query.all()
+            usuarios = query.limit(10).all()   # si no hay config, máximo 10
 
         # Mensaje si no hay usuarios
         if not usuarios:
@@ -543,6 +692,16 @@ def configure_airdrop():
             .first()
         )
     return render_template("admin_dashboard/admin_airdrop_config.html", config=config)
+
+@app.route("/airdrop_history_ajax")
+@login_required(role="admin")
+def airdrop_history_ajax():
+    logs = (
+        db.session.query(AirdropLog)
+        .order_by(AirdropLog.executed_at.desc())
+        .all()
+    )
+    return render_template("admin_dashboard/airdrop_history.html", logs=logs)
 
 
 if __name__ == "__main__":
