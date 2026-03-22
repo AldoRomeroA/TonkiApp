@@ -2,97 +2,82 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Airdrop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Airdrop - Tonki</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
 </head>
+
 <body class="gradient-bg">
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="#">
-            <i class="bi bi-wallet2"></i> TonkiApp Dashboard
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" href="/admin_dashboard">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/logout">
-                        <i class="bi bi-box-arrow-right"></i> Salir
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-12">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h2 class="card-title">Airdrop</h2>
-                    <p class="lead">Recompensas para tus usuarios más activos</p>
-                    <div class="my-3" style="margin-top: 35px;">
-                        <h5>Balance:</h5>
-                        <p class="fs-3">{{ balance }}</p>
-                        <p class="mb-1"><strong>Wallet del Airdrop:</strong></p>
-                        <p class="fs-6">{{ source_public_key }}</p>
-                    </div>
-
-                    <div class="d-flex justify-content-center mt-4">
-                        <div class="d-grid gap-3 d-md-block">
-                            <a href="" class="btn btn-outline-warning">
-                                <i class="bi bi-cash-stack"></i> Añadir Fondos
-                            </a>
-                            <a href="/send_airdrop" class="btn btn-outline-warning">
-                                <i class="bi bi-send-check"></i> Desplegar Airdrop
-                            </a>
-                            <a href="/configure_airdrop" class="btn btn-outline-warning">
-                                <i class="bi bi-gear"></i> Configurar Airdrop
-                            </a>
-                            <button id="btnHistorial" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#historialModal">
-                                <i class="bi bi-clock-history"></i> Historial de Movimientos
-                            </button>
-                            <a id="btnHorizon" href="#" target="_blank" class="btn btn-outline-info" style="display:none;">
-                                <i class="bi bi-link-45deg"></i> Ver en Horizon
-                            </a>
-                        </div>
-                    </div>
-
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <aside class="tonki-sidebar" id="tonkiSidebar">
+            <div class="tonki-sidebar-brand">
+                <button type="button" class="tonki-sidebar-toggle" id="tonkiSidebarToggle" aria-label="Toggle sidebar">
+                    <i class="bi bi-chevron-left" id="tonkiSidebarToggleIcon"></i>
+                </button>
+                <div class="tonki-sidebar-logo">
+                    <i class="bi bi-hexagon-fill"></i>
                 </div>
+                <span class="tonki-sidebar-brand-text">Tonki</span>
             </div>
 
-            
-            <!-- Alert Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                    {% if horizon_url %}
-                    <a href="{{ horizon_url }}" target="_blank" class="btn btn-sm btn-info ms-2">Ver en Horizon</a>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            {% endif %}
-            {% endwith %}
+            <nav class="tonki-sidebar-nav">
+                <a class="nav-link" href="{{ url_for('dashboard_admin') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Dashboard">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    <span class="tonki-sidebar-label">Dashboard</span>
+                </a>
+                <a class="nav-link active" href="{{ url_for('show_airdrop_page') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Airdrop">
+                    <i class="bi bi-gift"></i>
+                    <span class="tonki-sidebar-label">Airdrop</span>
+                </a>
+            </nav>
 
+            <div class="tonki-sidebar-footer">
+                <a class="nav-link" href="{{ url_for('logout') }}" data-bs-toggle="tooltip" data-bs-placement="right" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="tonki-sidebar-label">Cerrar sesión</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="tonki-main-wrapper container-fluid px-4 py-3">
+          <main>
+            <div class="pt-3 pb-2 mb-3 border-bottom text-black">
+              <h1 class="h2">Airdrop</h1>
+              <p class="lead">Rewards for your most active users</p>
+            </div>
+      
+            <!-- Card amount -->
+            <div class="row gx-4 gy-3">
+                <!-- Amount -->
+                <div class="col-12 col-lg-2">
+                  <div class="card shadow-sm mb-4 text-center h-100">
+                    <div class="card-body">
+                      <h6><i class="bi bi-cash-stack"></i> Amount</h6>
+                      <p class="fs-4 fw-bold">{{ amount }}</p>
+                    </div>
+                  </div>
+                </div>
+              
+                <!-- Wallet -->
+                <div class="col-12 col-lg-10">
+                  <div class="card shadow-sm mb-4 text-center h-100">
+                    <div class="card-body">
+                      <h6><i class="bi bi-key"></i> Wallet</h6>
+                      <p class="text-muted">{{ source_public_key }}</p>
+                    </div>
+                  </div>
+                </div>
+            </div>
 
             <!-- Users Table -->
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header bg-black text-white">
                             <h5 class="mb-0">
                                 <i class="bi bi-table"></i> Lista de Usuarios
                             </h5>
@@ -100,8 +85,8 @@
                         <div class="card-body p-0">
                             {% if usuarios %}
                             <div class="table-responsive">
-                                <table class="table table-dark table-hover table-striped mb-0 table-sm">
-                                    <thead class="table-dark table-sm">
+                                <table class="table table-white table-hover table-striped mb-0 table-sm">
+                                    <thead class="table-sm">
                                         <tr>
                                             <th>ID</th>
                                             <th>Nombre</th>
@@ -122,9 +107,9 @@
                                             </td>
                                             <td>
                                                 {% if usuario.Wallet %}
-                                                    <p class="table-id-color">{{ usuario.Wallet[:10] }}...{{ usuario.Wallet[-8:] }}</p>
+                                                    <p class="table-id-color" style="margin:0;">{{ usuario.Wallet[:10] }}...{{ usuario.Wallet[-8:] }}</p>
                                                 {% else %}
-                                                    <span class="text-white">
+                                                    <span class="text-muted">
                                                         <i class="bi bi-x-circle"></i> Sin wallet
                                                     </span>
                                                 {% endif %}
@@ -152,70 +137,82 @@
                     </div>
                 </div>
             </div>
-
-
+              
+              
+            <!--<div class="card shadow-sm mb-4">
+              <div class="card-body">
+                <div class="row text-center mb-4">
+                  <div class="col-md-6">
+                    <h6><i class="bi bi-cash-stack"></i> Amount</h6>
+                    <p class="fs-4 fw-bold">{{ amount }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <h6><i class="bi bi-key"></i> Wallet</h6>
+                    <p class="text-muted">{{ source_public_key }}</p>
+                  </div>
+                </div>
+                <div class="row text-center mb-4">
+                  <div class="col-md-4">
+                    <h6><i class="bi bi-calendar-event"></i> Scheduled Date</h6>
+                    <p>{{ scheduled_date }}</p>
+                  </div>
+                  <div class="col-md-4">
+                    <h6><i class="bi bi-people"></i> Max Users</h6>
+                    <p>{{ max_users }}</p>
+                  </div>
+                  <div class="col-md-4">
+                    <h6><i class="bi bi-repeat"></i> Periodicity</h6>
+                    <p>{{ periodicity_months }} months</p>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-center flex-wrap gap-3">
+                  <a href="" class="btn btn-warning"><i class="bi bi-cash-stack"></i> Add Funds</a>
+                  <a href="/send_airdrop" class="btn btn-warning"><i class="bi bi-send-check"></i> Deploy</a>
+                  <a href="/configure_airdrop" class="btn btn-warning"><i class="bi bi-gear"></i> Configure</a>
+                  <button id="btnHistorial" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#historialModal">
+                    <i class="bi bi-clock-history"></i> History
+                  </button>
+                  <a id="btnHorizon" href="#" target="_blank" class="btn btn-info" style="display:none;">
+                    <i class="bi bi-link-45deg"></i> Horizon
+                  </a>
+                </div>
+              </div>
+            </div>
+      
+            <!-- Users Table -->
+            <!-- (Mantén tu tabla aquí, dentro del main) -->
+          </main>
         </div>
     </div>
-</div>
-
-
-<!-- Modal Historial -->
-<div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="historialModalLabel">
-                <i class="bi bi-clock-history"></i> Historial de Movimientos
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-            <div id="historialContent" class="table-responsive">
-            <!-- Aquí se cargará el historial vía AJAX -->
-            </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const btnHorizon = document.getElementById("btnHorizon");
-    {% if show_horizon_button and horizon_url %}
-        btnHorizon.style.display = "inline-block";
-        btnHorizon.href = "{{ horizon_url }}";
-    {% endif %}
-});
-</script>
-
-
-<script>
-document.getElementById("btnHistorial").addEventListener("click", function() {
-    fetch("/airdrop_history_ajax")
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById("historialContent").innerHTML = html;
-        })
-        .catch(err => {
-            document.getElementById("historialContent").innerHTML = 
-                "<div class='alert alert-danger'>Error al cargar historial</div>";
-        });
-});
-</script>
-
-<script>
-  setTimeout(function() {
-    let alerts = document.querySelectorAll('.alert');
-    alerts.forEach(function(alert) {
-      alert.classList.remove('show');   // quita la clase "show"
-      alert.classList.add('fade');      // añade "fade" para animación
-      setTimeout(() => alert.remove(), 500); // elimina el nodo después de la animación
-    });
-  }, 5000);
-</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+  var STORAGE_KEY = 'tonki_sidebar_collapsed';
+  var sidebar = document.getElementById('tonkiSidebar');
+  var toggle = document.getElementById('tonkiSidebarToggle');
+  var icon = document.getElementById('tonkiSidebarToggleIcon');
+  if (!sidebar || !toggle || !icon) return;
 
+  function setCollapsed(collapsed) {
+    sidebar.classList.toggle('tonki-sidebar-collapsed', collapsed);
+    icon.className = collapsed ? 'bi bi-list' : 'bi bi-chevron-left';
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (e) {}
+  }
 
+  toggle.addEventListener('click', function() {
+    setCollapsed(!sidebar.classList.contains('tonki-sidebar-collapsed'));
+  });
+
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === '1') setCollapsed(true);
+  } catch (e) {}
+
+  [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function(el) {
+    new bootstrap.Tooltip(el);
+  });
+})();
+</script>
 </body>
 </html>

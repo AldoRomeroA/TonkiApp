@@ -19,14 +19,13 @@ class User(db.Model):
     type = db.Column(db.String(100), nullable=False, default="cliente")
     status = db.Column(db.String(50), default="active")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     credentials = db.relationship("Credential", back_populates="user")
     establishments = db.relationship("Establishment", back_populates="admin")
     rewards = db.relationship("Reward", back_populates="user")
     airdrop_configs = db.relationship("AirdropConfig", back_populates="user")
+    etherfuse_profile = db.relationship("EtherfuseProfile", back_populates="user", uselist=False)
 
 
 class Credential(db.Model):
@@ -115,4 +114,19 @@ class AirdropLog(db.Model):
     config = db.relationship("AirdropConfig", back_populates="logs")
     user = db.relationship("User", backref="airdrop_logs")
     establishment = db.relationship("Establishment", backref="airdrop_logs")
+
+
+class EtherfuseProfile(db.Model):
+    """Links Tonki User to Etherfuse customer for on/off-ramp. Create once per user, reuse forever."""
+    __tablename__ = "EtherfuseProfile"
+    profile_id = db.Column(db.String(32), primary_key=True, default=generate_uuid)
+    user_id = db.Column(db.String(32), db.ForeignKey("User.user_id"), nullable=False, unique=True)
+    customer_id = db.Column(db.String(64), nullable=False)
+    bank_account_id = db.Column(db.String(64), nullable=True)
+    crypto_wallet_id = db.Column(db.String(64), nullable=True)
+    kyc_status = db.Column(db.String(32), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship("User", back_populates="etherfuse_profile")
 

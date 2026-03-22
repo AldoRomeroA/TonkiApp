@@ -19,7 +19,7 @@ from flask import (
 )
 
 from flask_mail import Mail, Message
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from stellar_sdk import Asset, Keypair, Network, Server, TransactionBuilder
 import uuid
 import json
@@ -32,6 +32,7 @@ from admin_dashboard.models import (
     AirdropLog,
     Credential,
     Establishment,
+    EtherfuseProfile,
     Reward,
     User,
 )
@@ -44,7 +45,7 @@ from app_utils import (
     send_security_email,
 )
 
-from config import get_db_uri
+from config import ETHERFUSE_API_KEY, ETHERFUSE_IS_SANDBOX, get_db_uri
 from DB_logic import check_email_exists_db, create_credentials_db, create_user_db
 from extensions import db
 
@@ -218,7 +219,77 @@ def login():
 @app.route("/dashboard_admin")
 @login_required(role="admin")
 def dashboard_admin():
-    return render_template("admin_dashboard/admin_dashboard.html")
+    admin_id = session.get("user_id")
+
+    # Establecimiento del admin actual
+    establishment = Establishment.query.filter_by(admin_id=admin_id).first()
+
+    # Usuarios con recompensas en el establecimiento
+    usuarios = (
+        db.session.query(User)
+        .join(Reward, User.user_id == Reward.user_id)
+        .filter(Reward.establishment_id == establishment.establishment_id)
+        .all()
+    )
+
+    # Usuario con más puntos en el establecimiento
+    usuario_top = (
+        db.session.query(User.name, func.sum(Reward.points).label("total_puntos"))
+        .join(Reward, User.user_id == Reward.user_id)
+        .filter(Reward.establishment_id == establishment.establishment_id)
+        .group_by(User.user_id)
+        .order_by(desc("total_puntos"))
+        .first()
+    )
+
+    # Total de usuarios con puntos (>0)
+    usuarios_con_puntos = (
+        db.session.query(func.count(func.distinct(Reward.user_id)))
+        .filter(Reward.establishment_id == establishment.establishment_id,
+                Reward.points > 0)
+        .scalar()
+    )
+
+    # Usuarios con wallet
+    usuarios_con_wallet = (
+        db.session.query(func.count(User.user_id))
+        .filter(User.wallet_address.isnot(None))
+        .scalar()
+    )
+
+    # Suma de todas las visitas (cada Reward cuenta como una visita)
+    total_visitas = (
+        db.session.query(func.count(Reward.reward_id))
+        .filter(Reward.establishment_id == establishment.establishment_id)
+        .scalar()
+    )
+
+    # Configuración de Airdrop del admin
+    airdrop_config = (
+        AirdropConfig.query.filter_by(user_id=admin_id).first()
+    )
+
+    # Lista de usuarios con sus puntos y fecha de último movimiento
+    usuarios_lista = (
+        db.session.query(User.name, User.updated_at, func.sum(Reward.points).label("tonkis"))
+        .join(Reward, User.user_id == Reward.user_id)
+        .filter(Reward.establishment_id == establishment.establishment_id)
+        .group_by(User.user_id, User.name, User.updated_at)
+        .order_by(desc("tonkis"))
+        .all()
+    )
+
+    return render_template(
+        "admin_dashboard/admin_dashboard.html",
+        establichment_name=establishment.name,
+        usuarios=usuarios,
+        usuario_top=usuario_top,
+        usuarios_con_puntos=usuarios_con_puntos,
+        usuarios_con_wallet=usuarios_con_wallet,
+        total_visitas=total_visitas,
+        airdrop_config=airdrop_config,
+        usuarios_lista=usuarios_lista,
+    )
 
 
 @app.route("/dashboard_cliente")
@@ -300,6 +371,249 @@ def logout():
     session.clear()
     flash("Has cerrado sesión correctamente", "success")
     return redirect(url_for("login"))
+
+
+# ========== Etherfuse Ramp (MXN <-> crypto) ==========
+def _get_ramp_user():
+    uid = session.get("user_id")
+    if not uid:
+        return None
+    return User.query.filter_by(user_id=uid).first()
+
+
+def _get_or_create_etherfuse_profile(user):
+    profile = EtherfuseProfile.query.filter_by(user_id=user.user_id).first()
+    if profile:
+        return profile
+    return None
+
+
+@app.route("/ramp")
+@login_required(role="cliente")
+def ramp_page():
+    """Main ramp page: onboard if needed, else onramp/offramp options."""
+    user = _get_ramp_user()
+    if not user or not user.wallet_address:
+        flash("Necesitas una wallet registrada para usar Ramp", "warning")
+        return redirect(url_for("dashboard_cliente"))
+
+    profile = _get_or_create_etherfuse_profile(user)
+    stellar_assets = []
+    try:
+        if ETHERFUSE_API_KEY:
+            import etherfuse_client as ef
+            stellar_assets = ef.get_stellar_assets()
+    except Exception as e:
+        print(f"[Etherfuse] get_stellar_assets: {e}")
+
+    return render_template(
+        "ramp/ramp.html",
+        user=user,
+        profile=profile,
+        stellar_assets=stellar_assets,
+        etherfuse_configured=bool(ETHERFUSE_API_KEY),
+        is_sandbox=ETHERFUSE_IS_SANDBOX,
+    )
+
+
+@app.route("/ramp/onboard/start", methods=["POST"])
+@login_required(role="cliente")
+def ramp_onboard_start():
+    """Generate Etherfuse onboarding URL, save profile, redirect to hosted KYC."""
+    user = _get_ramp_user()
+    if not user or not user.wallet_address:
+        return jsonify({"error": "Wallet requerida"}), 400
+    if not ETHERFUSE_API_KEY:
+        return jsonify({"error": "Etherfuse no configurado"}), 503
+
+    import etherfuse_client as ef
+
+    customer_id = str(uuid.uuid4())
+    bank_account_id = str(uuid.uuid4())
+
+    try:
+        data = ef.generate_onboarding_url(
+            customer_id=customer_id,
+            bank_account_id=bank_account_id,
+            public_key=user.wallet_address,
+            blockchain="stellar",
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    presigned_url = data.get("presigned_url")
+    if not presigned_url:
+        return jsonify({"error": "No presigned_url en respuesta"}), 500
+
+    profile = EtherfuseProfile.query.filter_by(user_id=user.user_id).first()
+    if not profile:
+        profile = EtherfuseProfile(
+            user_id=user.user_id,
+            customer_id=customer_id,
+            bank_account_id=bank_account_id,
+        )
+        db.session.add(profile)
+    else:
+        profile.customer_id = customer_id
+        profile.bank_account_id = bank_account_id
+    db.session.commit()
+
+    return jsonify({"presigned_url": presigned_url})
+
+
+@app.route("/ramp/order/<order_id>")
+@login_required(role="cliente")
+def ramp_order_status(order_id):
+    """View order status and status page link."""
+    if not ETHERFUSE_API_KEY:
+        flash("Etherfuse no configurado", "warning")
+        return redirect(url_for("ramp_page"))
+
+    import etherfuse_client as ef
+
+    try:
+        order = ef.get_order(order_id)
+    except Exception as e:
+        flash(f"Error al obtener orden: {str(e)}", "danger")
+        return redirect(url_for("ramp_page"))
+
+    return render_template(
+        "ramp/order_status.html",
+        order=order,
+        status_page=order.get("statusPage"),
+        is_sandbox=ETHERFUSE_IS_SANDBOX,
+    )
+
+
+@app.route("/ramp/api/quote", methods=["POST"])
+@login_required(role="cliente")
+def ramp_api_quote():
+    """Create quote for onramp or offramp."""
+    user = _get_ramp_user()
+    profile = _get_or_create_etherfuse_profile(user)
+    if not profile or not profile.customer_id:
+        return jsonify({"error": "Completa el onboarding primero"}), 400
+    if not ETHERFUSE_API_KEY:
+        return jsonify({"error": "Etherfuse no configurado"}), 503
+
+    data = request.get_json() or {}
+    quote_type = data.get("type")  # "onramp" | "offramp"
+    source_asset = data.get("sourceAsset", "").strip()
+    target_asset = data.get("targetAsset", "").strip()
+    source_amount = data.get("sourceAmount", "").strip()
+
+    if not all([quote_type, source_asset, target_asset, source_amount]):
+        return jsonify({"error": "Faltan campos: type, sourceAsset, targetAsset, sourceAmount"}), 400
+    if quote_type not in ("onramp", "offramp"):
+        return jsonify({"error": "type debe ser onramp u offramp"}), 400
+
+    import etherfuse_client as ef
+
+    try:
+        quote = ef.create_quote(
+            customer_id=profile.customer_id,
+            blockchain="stellar",
+            quote_type=quote_type,
+            source_asset=source_asset,
+            target_asset=target_asset,
+            source_amount=source_amount,
+        )
+    except Exception as e:
+        err = getattr(e, "response", None)
+        msg = str(e)
+        if err and hasattr(err, "json"):
+            try:
+                body = err.json()
+                msg = body.get("error", body.get("message", msg))
+            except Exception:
+                pass
+        return jsonify({"error": msg}), 400
+
+    return jsonify(quote)
+
+
+@app.route("/ramp/api/order", methods=["POST"])
+@login_required(role="cliente")
+def ramp_api_order():
+    """Create onramp or offramp order from quote."""
+    user = _get_ramp_user()
+    profile = _get_or_create_etherfuse_profile(user)
+    if not profile or not profile.customer_id or not profile.bank_account_id:
+        return jsonify({"error": "Completa el onboarding primero"}), 400
+
+    # Fetch crypto_wallet_id from Etherfuse if missing
+    import etherfuse_client as ef
+
+    if not profile.crypto_wallet_id:
+        wallets = ef.get_customer_wallets(profile.customer_id)
+        for w in wallets:
+            wid = w.get("walletId") or w.get("wallet_id") or w.get("id")
+            pub = w.get("publicKey") or w.get("public_key")
+            if pub == user.wallet_address or (w.get("blockchain") == "stellar" and wid):
+                profile.crypto_wallet_id = wid
+                db.session.commit()
+                break
+        if not profile.crypto_wallet_id and wallets:
+            w = wallets[0]
+            profile.crypto_wallet_id = w.get("walletId") or w.get("wallet_id") or w.get("id")
+            db.session.commit()
+
+    if not profile.crypto_wallet_id:
+        return jsonify({"error": "Wallet no encontrada en Etherfuse. Completa el onboarding."}), 400
+    if not ETHERFUSE_API_KEY:
+        return jsonify({"error": "Etherfuse no configurado"}), 503
+
+    data = request.get_json() or {}
+    quote_id = data.get("quoteId", "").strip()
+    use_anchor = data.get("useAnchor", False)
+
+    if not quote_id:
+        return jsonify({"error": "quoteId requerido"}), 400
+
+    order_id = str(uuid.uuid4())
+
+    try:
+        order = ef.create_order(
+            order_id=order_id,
+            bank_account_id=profile.bank_account_id,
+            crypto_wallet_id=profile.crypto_wallet_id,
+            quote_id=quote_id,
+            use_anchor=use_anchor,
+        )
+    except Exception as e:
+        err = getattr(e, "response", None)
+        msg = str(e)
+        if err and hasattr(err, "json"):
+            try:
+                body = err.json()
+                msg = body.get("error", body.get("message", msg))
+            except Exception:
+                pass
+        return jsonify({"error": msg}), 400
+
+    return jsonify(order)
+
+
+@app.route("/ramp/api/simulate_fiat", methods=["POST"])
+@login_required(role="cliente")
+def ramp_api_simulate_fiat():
+    """Sandbox only: simulate fiat deposit for onramp order."""
+    if not ETHERFUSE_IS_SANDBOX:
+        return jsonify({"error": "Solo disponible en sandbox"}), 400
+
+    data = request.get_json() or {}
+    order_id = data.get("orderId", "").strip()
+    if not order_id:
+        return jsonify({"error": "orderId requerido"}), 400
+
+    import etherfuse_client as ef
+
+    try:
+        ef.simulate_fiat_received(order_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    return jsonify({"ok": True})
 
 
 @app.route("/user_qr_data")
@@ -473,7 +787,9 @@ def send_airdrop():
 
         # Configuración de Stellar
         server = Server(admin_dashboard.stellar_config.STELLAR_HORIZON)
-        source_keypair = Keypair.from_secret(admin_dashboard.stellar_config.STELLAR_SECRET)
+        source_keypair = Keypair.from_secret(admin_dashboard.stellar_config.STELLAR_SECRET) # esto necesita ser solicitado por un formulario
+        #antes del airdrip mostrar el formlario para poder enviar los datos
+        # no guardar el secret
         source_public_key = source_keypair.public_key
         source_account = server.load_account(source_public_key)
         account_data = server.accounts().account_id(source_public_key).call()
@@ -485,7 +801,8 @@ def send_airdrop():
         # Construcción de la transacción
         transaction_builder = TransactionBuilder(
             source_account=source_account,
-            network_passphrase=Network.TESTNET_NETWORK_PASSPHRASE,
+            #network_passphrase = Network.TESTNET_NETWORK_PASSPHRASE,
+            network_passphrase = Network.PUBLIC_NETWORK_PASSPHRASE,
             base_fee=100
         )
 
@@ -617,21 +934,46 @@ def show_airdrop_page():
         if not usuarios:
             flash("No hay usuarios registrados aún", "info")
 
+        # Configuración de Airdrop del admin
+        config = AirdropConfig.query.filter_by(user_id = user_id).first()
+
+        if config:
+            amount = config.amount
+            scheduled_date = config.scheduled_date
+            max_users = config.max_users
+            periodicity_months = config.periodicity_months
+        else:
+            amount = 0
+            scheduled_date = None
+            max_users = 0
+            periodicity_months = 0
+
+        find_admin_wallet = User.query.filter_by(user_id = user_id).first()
+        
         # Datos de la wallet del admin
-        server = Server(admin_dashboard.stellar_config.STELLAR_HORIZON)
+        # como no vamos a requerir el secret del admin o establecimiento
+        #Ya no se vera el balance ni nada relacionado a la cuenta
+
+        """server = Server(admin_dashboard.stellar_config.STELLAR_HORIZON)
         source_keypair = Keypair.from_secret(
             admin_dashboard.stellar_config.STELLAR_SECRET
         )
         source_public_key = source_keypair.public_key
         account_data = server.accounts().account_id(source_public_key).call()
-        balance = account_data["balances"][0]["balance"]
+        balance = account_data["balances"][0]["balance"]"""
+
+
 
         return render_template(
             "admin_dashboard/admin_airdrop.html",
             usuarios=usuarios,
-            balance=balance,
-            source_public_key=source_public_key,
+            amount=amount,
+            source_public_key=find_admin_wallet.wallet_address,
+            scheduled_date=scheduled_date,
+            max_users=max_users,
+            periodicity_months=periodicity_months
         )
+
     except Exception as e:
         print(f"Error al conectar con la base de datos: {str(e)}")
         flash(f"Error al conectar con la base de datos: {str(e)}", "danger")
@@ -702,6 +1044,34 @@ def airdrop_history_ajax():
         .all()
     )
     return render_template("admin_dashboard/airdrop_history.html", logs=logs)
+
+
+@app.route("/validate_airdrop_secret", methods=["POST"])
+@login_required(role="admin")
+def validate_airdrop_secret():
+    data = request.get_json()
+    secret = data.get("secret")
+    
+    #try:
+        # Build keypair from provided secret
+        #source_keypair = Keypair.from_secret(secret)
+        #source_public_key = source_keypair.public_key
+
+        # Connect to Horizon (mainnet or testnet depending on config)
+        #server = Server("https://horizon.stellar.org")  # mainnet
+        #server = Server("https://horizon-testnet.stellar.org")
+        #account_data = server.accounts().account_id(source_public_key).call()
+
+        # Check if account has any balance
+        #balances = account_data.get("balances", [])
+        #if balances and float(balances[0]["balance"]) > 0:
+        #    return jsonify({"valid": True})
+        #else:
+        #    return jsonify({"valid": False})
+    #except Exception:
+    #    return jsonify({"valid": False})
+
+
 
 
 if __name__ == "__main__":

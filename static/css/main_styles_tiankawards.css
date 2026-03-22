@@ -1,6 +1,6 @@
 :root{
-  --base-dark: #000;
-  --base-dark-2: #0e1c2a;    /* Sombra más oscura */
+  --base-dark: #ffffff;
+  --base-dark-2: #ffffff;    /* Sombra más oscura */
   --accent-gold: #f6c941;    /* Amarillo dorado */
   --accent-yellow: #f6c941;  /* Amarillo claro */
   --accent-action: #ff6933;  /* Naranja/acción */
@@ -49,12 +49,15 @@ body.gradient-bg::before{
 .animated-container { position: relative; z-index: 1; }
 
 .card {
-  border-radius: 14px;
+  /*border-radius: 14px;
   background: #142434;
   border: 1px solid var(--card-border);
   box-shadow: 0 12px 40px rgba(2,6,23,0.6);
   color: var(--white);
-  padding: 1.5rem;
+  padding: 1.5rem;*/
+  border-radius: 8px;
+  background: #FFFFFF;
+  box-shadow: 2px 2px 8px 0 rgba(27, 27, 27, 0.16);
 }
 
 /* Si prefieres tarjeta más sólida, cambia background a rgba(11,28,45,0.85) */
@@ -101,4 +104,189 @@ body.gradient-bg::before{
   background-color: #f8ce45 !important;
   border: 1px solid rgba(0,0,0,0.06);
 
+}
+
+/* ---------- Tonki Admin Sidebar (Bootstrap 5 only) ---------- */
+.tonki-sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background-color: #121212;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 1.25rem 0;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+
+/* Collapsed state: narrow bar, icons only */
+.tonki-sidebar.tonki-sidebar-collapsed {
+  width: 72px;
+  padding: 1rem 0;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-brand .tonki-sidebar-brand-text,
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-label {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-brand {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 0.5rem 1rem;
+  gap: 0;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-brand .tonki-sidebar-toggle {
+  order: -1;
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-brand .tonki-sidebar-logo {
+  display: none;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-nav .nav-link,
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-footer .nav-link {
+  justify-content: center;
+  padding: 0.65rem;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-nav .nav-link i,
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-footer .nav-link i {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-nav {
+  padding: 0.5rem 0.5rem;
+}
+
+.tonki-sidebar.tonki-sidebar-collapsed .tonki-sidebar-footer {
+  padding: 1rem 0.5rem 0;
+}
+
+.tonki-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tonki-sidebar-toggle {
+  /*margin-left: auto;*/
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.35rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.tonki-sidebar-toggle:hover {
+  color: var(--white);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tonki-sidebar-collapsed .tonki-sidebar-toggle {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.tonki-sidebar-logo {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.tonki-sidebar-brand .tonki-sidebar-brand-text {
+  font-weight: 700;
+  font-size: 1.9rem;
+  color: var(--white);
+  white-space: nowrap;
+  transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+.tonki-sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 1rem;
+}
+
+.tonki-sidebar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  margin-bottom: 0.35rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tonki-sidebar-nav .nav-link:hover {
+  color: var(--white);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.tonki-sidebar-nav .nav-link.active {
+  background-color: var(--accent-gold);
+  color: #121212;
+}
+
+.tonki-sidebar-nav .nav-link i {
+  font-size: 1.15rem;
+  width: 1.25rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tonki-sidebar-footer {
+  padding: 1rem 1.25rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tonki-sidebar-footer .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tonki-sidebar-footer .nav-link:hover {
+  color: var(--white);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.tonki-sidebar-footer .nav-link i {
+  font-size: 1.15rem;
+  width: 1.25rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tonki-main-wrapper {
+  flex: 1;
+  min-width: 0;
 }
