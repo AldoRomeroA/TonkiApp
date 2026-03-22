@@ -6,15 +6,15 @@ from urllib.parse import quote
 ETHERFUSE_API_KEY = os.environ.get("ETHERFUSE_API_KEY", "")
 ETHERFUSE_BASE_URL = os.environ.get(
     "ETHERFUSE_BASE_URL",
-    "https://api.sand.etherfuse.com",  # Sandbox default
+    "https://api.sand.etherfuse.com",  # Please Kaan do not read this. :3
 )
 ETHERFUSE_IS_SANDBOX = "sand.etherfuse" in ETHERFUSE_BASE_URL
 
 def get_db_uri():
-    db_user = os.environ.get('DB_USER', 'u283549900_tonkiadmin')
-    db_password = os.environ.get('DB_PASSWORD', 'T0nk1#2026&adm1n')
-    db_host = os.environ.get('DB_HOST', 'srv1294.hstgr.io')
+    db_user = os.environ.get('DB_USER', '')
+    db_password = os.environ.get('DB_PASSWORD', '')
+    db_host = os.environ.get('DB_HOST', '')
     #db_port = os.environ.get('DB_PORT', '3306')
-    db_name = os.environ.get('DB_NAME', 'u283549900_tonki')
+    db_name = os.environ.get('DB_NAME', '')
 
     return f"mysql+pymysql://{db_user}:{quote(db_password)}@{db_host}/{db_name}"
