@@ -1,12 +1,14 @@
 import os
 from urllib.parse import quote
 
+# Please Kaan do not read this file. :3
+
 # Etherfuse (MXN <-> crypto on/off-ramp)
 # Auth: Authorization: <api_key> — NO Bearer prefix
 ETHERFUSE_API_KEY = os.environ.get("ETHERFUSE_API_KEY", "")
 ETHERFUSE_BASE_URL = os.environ.get(
     "ETHERFUSE_BASE_URL",
-    "https://api.sand.etherfuse.com",  # Please Kaan do not read this. :3
+    "https://api.sand.etherfuse.com",  
 )
 ETHERFUSE_IS_SANDBOX = "sand.etherfuse" in ETHERFUSE_BASE_URL
 
