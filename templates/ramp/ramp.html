@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ramp - Tonki</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
+</head>
+<body class="gradient-bg">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="{{ url_for('dashboard_cliente') }}">
+      <i class="bi bi-wallet2"></i> Tonki
+    </a>
+
+      <a href="https://etherfuse.com" target="_blank" class="fw-bold" style="margin-left: 10px; color:#e4ff3f;">
+        <small>Powered by Etherfuse.com</small>
+      </a>
+
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard_cliente') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('ramp_page') }}"><i class="bi bi-arrow-left-right"></i> Ramp</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Salir</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <h1 class="text-white mb-3"><i class="bi bi-arrow-left-right"></i> Ramp MXN ↔ Crypto</h1>
+  <p class="text-white-50">Compra y vende CETES, USDC y más con pesos mexicanos vía Etherfuse.</p>
+
+  {% if not etherfuse_configured %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i> Etherfuse no está configurado. Define <code>ETHERFUSE_API_KEY</code> en el entorno.
+  </div>
+  {% elif not profile or not profile.bank_account_id %}
+  <!-- Onboarding -->
+  <div class="card">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-person-check fs-1 text-primary"></i>
+      <h4 class="mt-3">Completa tu verificación</h4>
+      <p class="text-muted">Necesitamos verificar tu identidad y registrar tu cuenta bancaria para usar Ramp.</p>
+      <button type="button" class="btn btn-primary btn-lg" id="btnOnboard">
+        <i class="bi bi-box-arrow-up-right"></i> Ir a verificación
+      </button>
+    </div>
+  </div>
+  {% else %}
+  <!-- Onramp / Offramp -->
+  <ul class="nav nav-tabs mb-4" id="rampTabs">
+    <li class="nav-item"><a class="nav-link bg-black active" data-bs-toggle="tab" href="#onramp">Onramp (MXN → Crypto)</a></li>
+    <li class="nav-item"><a class="nav-link bg-black" data-bs-toggle="tab" href="#offramp">Offramp (Crypto → MXN)</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="onramp">
+      <div class="card">
+        <div class="card-body">
+          <h5>Comprar crypto con MXN</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Monto (MXN)</label>
+              <input type="number" class="form-control" id="onrampAmount" placeholder="100" min="1" step="1">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Activo destino</label>
+              <select class="form-select" id="onrampAsset">
+                {% for a in stellar_assets %}
+                <option value="{{ a.identifier }}">{{ a.symbol }}</option>
+                {% endfor %}
+                {% if not stellar_assets %}
+                <option value="CETES:GCRYUGD5NVARGXT56XEZI5CIFCQETYHAPQQTHO203IQZTHDHH4LATMYWC">CETES</option>
+                <option value="USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN">USDC</option>
+                {% endif %}
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" class="btn btn-warning w-100" id="btnOnrampQuote">Obtener cotización</button>
+            </div>
+          </div>
+          <div id="onrampQuote" class="mt-3" style="display:none;">
+            <hr>
+            <p id="onrampQuoteText"></p>
+            <button type="button" class="btn btn-success" id="btnOnrampOrder">Crear orden</button>
+            <span id="onrampQuoteId" class="d-none"></span>
+          </div>
+          <div id="onrampOrderResult" class="mt-3" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="offramp">
+      <div class="card">
+        <div class="card-body">
+          <h5>Vender crypto por MXN</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Monto (crypto)</label>
+              <input type="number" class="form-control" id="offrampAmount" placeholder="10" min="0.01" step="0.01">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Activo origen</label>
+              <select class="form-select" id="offrampAsset">
+                {% for a in stellar_assets %}
+                <option value="{{ a.identifier }}">{{ a.symbol }}</option>
+                {% endfor %}
+                {% if not stellar_assets %}
+                <option value="CETES:GCRYUGD5NVARGXT56XEZI5CIFCQETYHAPQQTHO203IQZTHDHH4LATMYWC">CETES</option>
+                <option value="USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN">USDC</option>
+                {% endif %}
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" class="btn btn-warning w-100" id="btnOfframpQuote">Obtener cotización</button>
+            </div>
+          </div>
+          <div id="offrampQuote" class="mt-3" style="display:none;">
+            <hr>
+            <p id="offrampQuoteText"></p>
+            <button type="button" class="btn btn-success" id="btnOfframpOrder">Crear orden</button>
+            <span id="offrampQuoteId" class="d-none"></span>
+          </div>
+          <div id="offrampOrderResult" class="mt-3" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+  var btnOnboard = document.getElementById("btnOnboard");
+  if (btnOnboard) {
+    btnOnboard.addEventListener("click", function() {
+      btnOnboard.disabled = true;
+      fetch("{{ url_for('ramp_onboard_start') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.presigned_url) {
+          window.location.href = data.presigned_url;
+        } else {
+          alert(data.error || "Error al generar URL");
+          btnOnboard.disabled = false;
+        }
+      })
+      .catch(function(e) {
+        alert("Error: " + e.message);
+        btnOnboard.disabled = false;
+      });
+    });
+  }
+
+  function doQuote(type, sourceAsset, targetAsset, sourceAmount, quoteEl, quoteTextEl, quoteIdEl) {
+    fetch("{{ url_for('ramp_api_quote') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: type,
+        sourceAsset: sourceAsset,
+        targetAsset: targetAsset,
+        sourceAmount: String(sourceAmount)
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      var dest = data.destinationAmount || data.destinationAmountAfterFee || "?";
+      quoteTextEl.textContent = "Recibirás aprox. " + dest + " (tasa: " + (data.exchangeRate || "N/A") + ")";
+      quoteIdEl.textContent = data.quoteId;
+      quoteEl.style.display = "block";
+    })
+    .catch(function(e) { alert("Error: " + e.message); });
+  }
+
+  function doOrder(quoteId, resultEl, isOnramp) {
+    fetch("{{ url_for('ramp_api_order') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quoteId: quoteId })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      var oid = data.orderId || data.order_id || data.id;
+      var statusPage = data.statusPage || data.status_page;
+      var depositClabe = data.depositClabe || data.deposit_clabe;
+      var html = '<div class="alert alert-success"><strong>Orden creada</strong><br>';
+      if (statusPage) {
+        html += '<a href="' + statusPage + '" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Ver estado</a> ';
+      }
+      if (depositClabe) {
+        html += '<p class="mt-2 mb-0">Deposita a CLABE: <code>' + depositClabe + '</code></p>';
+      }
+      if (isOnramp && {{ 'true' if is_sandbox else 'false' }} && oid) {
+        html += '<div class="mt-2"><button type="button" class="btn btn-warning btn-sm" data-order-id="' + oid + '">Simular depósito (sandbox)</button></div>';
+      }
+      html += '</div>';
+      resultEl.innerHTML = html;
+      resultEl.style.display = "block";
+
+      var btnSim = resultEl.querySelector("[data-order-id]");
+      if (btnSim) {
+        btnSim.onclick = function() {
+          var id = this.getAttribute("data-order-id");
+          fetch("{{ url_for('ramp_api_simulate_fiat') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: id })
+          }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.ok) alert("Depósito simulado. La orden debería completarse pronto.");
+            else alert(d.error || "Error");
+          });
+        };
+      }
+    })
+    .catch(function(e) { alert("Error: " + e.message); });
+  }
+
+  var btnOnrampQuote = document.getElementById("btnOnrampQuote");
+  if (btnOnrampQuote) {
+    btnOnrampQuote.addEventListener("click", function() {
+      var amt = document.getElementById("onrampAmount").value;
+      var asset = document.getElementById("onrampAsset").value;
+      if (!amt || !asset) { alert("Ingresa monto y selecciona activo"); return; }
+      doQuote("onramp", "MXN", asset, amt,
+        document.getElementById("onrampQuote"),
+        document.getElementById("onrampQuoteText"),
+        document.getElementById("onrampQuoteId"));
+    });
+  }
+
+  var btnOnrampOrder = document.getElementById("btnOnrampOrder");
+  if (btnOnrampOrder) {
+    btnOnrampOrder.addEventListener("click", function() {
+      var qid = document.getElementById("onrampQuoteId").textContent;
+      if (!qid) return;
+      doOrder(qid, document.getElementById("onrampOrderResult"), true);
+    });
+  }
+
+  var btnOfframpQuote = document.getElementById("btnOfframpQuote");
+  if (btnOfframpQuote) {
+    btnOfframpQuote.addEventListener("click", function() {
+      var amt = document.getElementById("offrampAmount").value;
+      var asset = document.getElementById("offrampAsset").value;
+      if (!amt || !asset) { alert("Ingresa monto y selecciona activo"); return; }
+      doQuote("offramp", asset, "MXN", amt,
+        document.getElementById("offrampQuote"),
+        document.getElementById("offrampQuoteText"),
+        document.getElementById("offrampQuoteId"));
+    });
+  }
+
+  var btnOfframpOrder = document.getElementById("btnOfframpOrder");
+  if (btnOfframpOrder) {
+    btnOfframpOrder.addEventListener("click", function() {
+      var qid = document.getElementById("offrampQuoteId").textContent;
+      if (!qid) return;
+      doOrder(qid, document.getElementById("offrampOrderResult"), false);
+    });
+  }
+})();
+</script>
+</body>
+</html>

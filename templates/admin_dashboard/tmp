@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Airdrop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
+</head>
+<!--body class="gradient-bg" -->
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="bi bi-wallet2"></i> TonkiApp Dashboard
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin_dashboard">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">
+                        <i class="bi bi-box-arrow-right"></i> Salir
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="card-title">Airdrop</h2>
+                    <p class="lead">Rewards for your most active users</p>
+                    <div class="my-3" style="margin-top: 35px;">
+                        <h5>Amount:</h5>
+                        <p class="fs-3">{{ amount }}</p>
+                        <p class="mb-1"><strong>Airdrop Wallet:</strong></p>
+                        <p class="fs-6">{{ source_public_key }}</p>
+                    </div>
+
+                    <div class="my-3">
+                        <p><strong>Scheduled Date:</strong> {{ scheduled_date }}</p>
+                        <p><strong>Max Users:</strong> {{ max_users }}</p>
+                        <p><strong>Periodicity (months):</strong> {{ periodicity_months }}</p>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-4">
+                        <div class="d-grid gap-3 d-md-block">
+                            <a href="" class="btn btn-outline-warning">
+                                <i class="bi bi-cash-stack"></i> Add Funds
+                            </a>
+                            <a href="/send_airdrop" class="btn btn-outline-warning">
+                                <i class="bi bi-send-check"></i> Deploy Airdrop
+                            </a>
+                            <a href="/configure_airdrop" class="btn btn-outline-warning">
+                                <i class="bi bi-gear"></i> Configure Airdrop
+                            </a>
+                            <button id="btnHistorial" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#historialModal">
+                                <i class="bi bi-clock-history"></i> History
+                            </button>
+                            <a id="btnHorizon" href="#" target="_blank" class="btn btn-outline-info" style="display:none;">
+                                <i class="bi bi-link-45deg"></i> View on Horizon
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alert Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                    {% if horizon_url %}
+                    <a href="{{ horizon_url }}" target="_blank" class="btn btn-sm btn-info ms-2">Ver en Horizon</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+
+            <!-- Users Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-table"></i> Lista de Usuarios
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if usuarios %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover table-striped mb-0 table-sm">
+                                    <thead class="table-dark table-sm">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre</th>
+                                            <th>Wallet Address</th>
+                                            <th>Tonkis</th>
+                                            <th>% del fondo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for usuario in usuarios %}
+                                        <tr>
+                                            <td class="table-id-color">
+                                                <strong>{{ usuario.ID[:6] }}...{{ usuario.ID[-4:] }}</strong>
+                                            </td>
+                                            <td>
+                                                <i class="bi bi-person-circle"></i>
+                                                {{ usuario.Nombre }}
+                                            </td>
+                                            <td>
+                                                {% if usuario.Wallet %}
+                                                    <p class="table-id-color">{{ usuario.Wallet[:10] }}...{{ usuario.Wallet[-8:] }}</p>
+                                                {% else %}
+                                                    <span class="text-white">
+                                                        <i class="bi bi-x-circle"></i> Sin wallet
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ usuario.Tonkis }}</td> 
+                                            <td>{{ "%.2f"|format(usuario.porcentaje_fondo) }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-3">No hay usuarios registrados</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer" style="padding: 0;">
+                            <small>
+                                <i class="bi bi-info-circle"></i>
+                                Mostrando {{ usuarios|length }} usuario(s)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Historial -->
+<div class="modal fade" id="historialModal" tabindex="-1" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historialModalLabel">
+                <i class="bi bi-clock-history"></i> Historial de Movimientos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+            <div id="historialContent" class="table-responsive">
+            <!-- Aquí se cargará el historial vía AJAX -->
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const btnHorizon = document.getElementById("btnHorizon");
+    {% if show_horizon_button and horizon_url %}
+        btnHorizon.style.display = "inline-block";
+        btnHorizon.href = "{{ horizon_url }}";
+    {% endif %}
+});
+</script>
+
+
+<script>
+document.getElementById("btnHistorial").addEventListener("click", function() {
+    fetch("/airdrop_history_ajax")
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("historialContent").innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById("historialContent").innerHTML = 
+                "<div class='alert alert-danger'>Error al cargar historial</div>";
+        });
+});
+</script>
+
+<script>
+  setTimeout(function() {
+    let alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+      alert.classList.remove('show');   // quita la clase "show"
+      alert.classList.add('fade');      // añade "fade" para animación
+      setTimeout(() => alert.remove(), 500); // elimina el nodo después de la animación
+    });
+  }, 5000);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - TonkiApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/main_styles_tiankawards.css">
+</head>
+<body class="gradient-bg">
+
+<!-- Navbar -->
+<!--
+<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/admin_dashboard">
+            <i class="bi bi-wallet2"></i> Tonki Administrator Dashboard - {{ establichment_name }}
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a id="airdropLink" class="nav-link" href="/admin_airdrop">
+                        <i class="bi bi-dropbox"></i> Airdrop
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="bi bi-box-arrow-right"></i> Salir
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav> -->
+
+<!-- Sidebar -->
+<aside class="tonki-sidebar">
+    <div class="tonki-sidebar-brand">
+        <div class="tonki-sidebar-logo">
+            <i class="bi bi-hexagon-fill"></i>
+        </div>
+        <span>Tonki</span>
+    </div>
+
+    <nav class="tonki-sidebar-nav">
+        <a class="nav-link" href="{{ url_for('dashboard_admin') }}">
+            <i class="bi bi-grid-3x3-gap"></i>
+            Dashboard
+        </a>
+        <a class="nav-link active" href="{{ url_for('show_airdrop_page') }}">
+            <i class="bi bi-gift"></i>
+            Airdrop
+        </a>
+    </nav>
+
+    <div class="tonki-sidebar-footer">
+        <a class="nav-link" href="{{ url_for('logout') }}">
+            <i class="bi bi-box-arrow-right"></i>
+            Cerrar sesión
+        </a>
+    </div>
+</aside>
+
+ <!-- Main content -->
+ <div class="tonki-main-wrapper container-fluid px-4 py-3">
+    <main>
+
+        <div class="pt-3 pb-2 mb-3 border-bottom text-black">
+            <h1 class="h2"><i class="bi bi-people-fill"></i> Dashboard - {{ establichment_name }}</h1>
+            <p class="lead">Lista de usuarios</p>
+          </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white mb-3">
+                <i class="bi bi-people-fill"></i> Gestión de Usuarios
+            </h1>
+            <p class="text-white-50">Usuarios registrados en {{ establichment_name }}</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <!-- Usuario con más puntos -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div class="card text-center flex-fill h-100">
+                <div class="card-body">
+                    <i class="bi bi-trophy fs-1 text-warning"></i>
+                    <h3 class="mt-2">{{ usuario_top.name if usuario_top else 'N/A' }}</h3>
+                    <p class="text-white mb-0">Usuario con más puntos ({{ usuario_top.total_puntos if usuario_top else 0 }})</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total usuarios con puntos -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div class="card text-center flex-fill h-100">
+                <div class="card-body">
+                    <i class="bi bi-graph-up fs-1 text-success"></i>
+                    <h3 class="mt-2">{{ usuarios_con_puntos }}</h3>
+                    <p class="text-white mb-0">Usuarios con puntos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usuarios con wallet -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div class="card text-center flex-fill h-100">
+                <div class="card-body">
+                    <i class="bi bi-wallet2 fs-1 text-primary"></i>
+                    <h3 class="mt-2">{{ usuarios_con_wallet }}</h3>
+                    <p class="text-white mb-0">Usuarios con wallet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total visitas -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div class="card text-center flex-fill h-100">
+                <div class="card-body">
+                    <i class="bi bi-eye fs-1 text-info"></i>
+                    <h3 class="mt-2">{{ total_visitas }}</h3>
+                    <p class="text-white mb-0">Total de visitas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Airdrop programado -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div class="card text-center flex-fill h-100">
+                <div class="card-body">
+                    <i class="bi bi-calendar-event fs-1 text-danger"></i>
+                    <h3 class="mt-2">{{ airdrop_config.scheduled_date if airdrop_config else 'N/A' }}</h3>
+                    <p class="text-white mb-0">Fecha del próximo Airdrop</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cantidad del Airdrop -->
+        <div class="col-md-4 mb-3 d-flex">
+            <div class="card text-center flex-fill h-100">
+                <div class="card-body">
+                    <i class="bi bi-cash-stack fs-1 text-success"></i>
+                    <h3 class="mt-2">{{ airdrop_config.amount if airdrop_config else 0 }}</h3>
+                    <p class="text-white mb-0">Cantidad del Airdrop</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Lista de usuarios -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-white mb-3"><i class="bi bi-list"></i> Usuarios del establecimiento</h2>
+        <div class="table-responsive">
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Último movimiento</th>
+                        <th>Tonkis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios_lista %}
+                    <tr>
+                        <td>{{ usuario.name }}</td>
+                        <td>{{ usuario.updated_at.strftime('%d/%m/%Y %H:%M') if usuario.updated_at else 'N/A' }}</td>
+                        <td>{{ usuario.tonkis }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.getElementById("airdropSecret").addEventListener("input", function() {
+    const secret = this.value.trim();
+
+    // Trigger only when full secret key length is reached
+    if (secret.length === 56) {
+        fetch("/validate_airdrop_secret", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ secret: secret })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.valid) {
+                document.getElementById("airdropLink").classList.remove("disabled");
+                document.getElementById("airdropSecret").style.display = "none";
+            } else {
+                alert("Invalid or unfunded Stellar account");
+            }
+        })
+        .catch(err => {
+            console.error("Validation error:", err);
+            alert("Error validating secret key");
+        });
+    }
+});
+</script>
+
+
+
+</body>
+</html>
