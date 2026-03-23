@@ -5,7 +5,6 @@ Auth: Authorization: <api_key> — NO Bearer prefix.
 """
 import uuid
 import requests
-from typing import Any, Optional
 
 # Import app config lazily to avoid circular imports
 def _get_config():
@@ -109,7 +108,7 @@ def create_quote(
             "sourceAsset": source_asset,
             "targetAsset": target_asset,
         },
-        "sourceAmount": source_amount,
+        "sourceAmount": str(source_amount).strip(),
     }
     r = requests.post(
         _url("/ramp/quote"),
@@ -117,7 +116,13 @@ def create_quote(
         json=payload,
         timeout=15,
     )
-    r.raise_for_status()
+    if not r.ok:
+        try:
+            body = r.json()
+            msg = body.get("error") or body.get("message") or body.get("detail") or str(body)
+        except Exception:
+            msg = (r.text or r.reason or str(r.status_code))[:800]
+        raise RuntimeError(msg) from None
     return r.json()
 
 
@@ -207,24 +212,47 @@ def get_kyc_status(customer_id: str, public_key: str) -> dict:
 # --- Rampable assets (auth required, wallet-specific) ---
 
 def get_rampable_assets(
-    customer_id: str,
-    blockchain: str,
-    currency: str = "MXN",
-    public_key: Optional[str] = None,
+    wallet_public_key: str,
+    blockchain: str = "stellar",
+    currency: str = "mxn",
 ) -> dict:
-    """GET /ramp/assets — assets available for this customer/wallet."""
+    """
+    GET /ramp/assets — correct query params per OpenAPI:
+    blockchain, currency (e.g. 'mxn'), wallet (Stellar public key).
+    Use the `identifier` from each asset in POST /ramp/quote — not /lookup/stablebonds.
+    """
     params = {
-        "customerId": customer_id,
         "blockchain": blockchain,
-        "currency": currency,
+        "currency": currency.lower(),
+        "wallet": wallet_public_key.strip(),
     }
-    if public_key:
-        params["publicKey"] = public_key
     r = requests.get(
         _url("/ramp/assets"),
         headers=_headers(),
         params=params,
         timeout=15,
     )
-    r.raise_for_status()
+    if not r.ok:
+        try:
+            body = r.json()
+            msg = body.get("error") or body.get("message") or str(body)
+        except Exception:
+            msg = (r.text or r.reason)[:500]
+        raise RuntimeError(msg) from None
     return r.json()
+
+
+def get_rampable_stellar_assets_list(wallet_public_key: str) -> list[dict]:
+    """Returns [{symbol, identifier, name}, ...] for dropdowns; identifiers are quote-safe."""
+    data = get_rampable_assets(wallet_public_key, blockchain="stellar", currency="mxn")
+    out = []
+    for a in data.get("assets", []):
+        ident = (a.get("identifier") or "").strip()
+        if not ident:
+            continue
+        out.append({
+            "symbol": a.get("symbol"),
+            "identifier": ident,
+            "name": a.get("name"),
+        })
+    return out

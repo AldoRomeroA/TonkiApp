@@ -52,6 +52,11 @@
   </div>
   {% else %}
   <!-- Onramp / Offramp -->
+  {% if assets_source == "stablebonds_fallback" %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Los activos se cargaron desde un respaldo. Si la cotización falla, recarga la página tras completar el onboarding en Etherfuse.
+  </div>
+  {% endif %}
   <ul class="nav nav-tabs mb-4" id="rampTabs">
     <li class="nav-item"><a class="nav-link bg-black active" data-bs-toggle="tab" href="#onramp">Onramp (MXN → Crypto)</a></li>
     <li class="nav-item"><a class="nav-link bg-black" data-bs-toggle="tab" href="#offramp">Offramp (Crypto → MXN)</a></li>

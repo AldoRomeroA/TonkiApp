@@ -399,12 +399,20 @@ def ramp_page():
 
     profile = _get_or_create_etherfuse_profile(user)
     stellar_assets = []
+    assets_source = "none"
     try:
-        if ETHERFUSE_API_KEY:
+        if ETHERFUSE_API_KEY and user.wallet_address:
             import etherfuse_client as ef
-            stellar_assets = ef.get_stellar_assets()
+            # Prefer GET /ramp/assets (wallet + mxn) — identifiers must match quote API
+            try:
+                stellar_assets = ef.get_rampable_stellar_assets_list(user.wallet_address)
+                assets_source = "ramp_assets"
+            except Exception as e1:
+                print(f"[Etherfuse] get_rampable_assets fallback: {e1}")
+                stellar_assets = ef.get_stellar_assets()
+                assets_source = "stablebonds_fallback"
     except Exception as e:
-        print(f"[Etherfuse] get_stellar_assets: {e}")
+        print(f"[Etherfuse] load assets: {e}")
 
     return render_template(
         "ramp/ramp.html",
@@ -413,6 +421,7 @@ def ramp_page():
         stellar_assets=stellar_assets,
         etherfuse_configured=bool(ETHERFUSE_API_KEY),
         is_sandbox=ETHERFUSE_IS_SANDBOX,
+        assets_source=assets_source,
     )
 
 
@@ -507,6 +516,14 @@ def ramp_api_quote():
     if quote_type not in ("onramp", "offramp"):
         return jsonify({"error": "type debe ser onramp u offramp"}), 400
 
+    # Etherfuse expects customerId as UUID (with hyphens)
+    try:
+        uuid.UUID(str(profile.customer_id))
+    except (ValueError, TypeError):
+        return jsonify(
+            {"error": "customer_id inválido en perfil; vuelve a hacer onboarding."}
+        ), 400
+
     import etherfuse_client as ef
 
     try:
@@ -519,8 +536,8 @@ def ramp_api_quote():
             source_amount=source_amount,
         )
     except Exception as e:
-        err = getattr(e, "response", None)
         msg = str(e)
+        err = getattr(e, "response", None)
         if err and hasattr(err, "json"):
             try:
                 body = err.json()
