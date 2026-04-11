@@ -31,7 +31,6 @@ export async function POST(req: Request) {
       // Verificación de la firma usando la llave pública
       isValid = keypair.verify(messageHash, signatureBytes);
     } catch (err) {
-      console.error("❌ Error en verificación:", err);
       return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
     }
 
