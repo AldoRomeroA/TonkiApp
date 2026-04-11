@@ -10,8 +10,12 @@ export default function Home() {
           <span className="text-xl font-bold text-[#FFF]">Tonki</span>
         </div>
         <nav className="space-x-6">
-          <a href="#features" className="hover:text-[#F6C941]">Características</a>
-          <a href="#contact" className="hover:text-[#F6C941]">Contacto</a>
+          <a href="#features" className="hover:text-[#F6C941]">
+            Características
+          </a>
+          <a href="#contact" className="hover:text-[#F6C941]">
+            Contacto
+          </a>
         </nav>
       </header>
 
@@ -21,8 +25,8 @@ export default function Home() {
           Recompensas simples para negocios locales
         </h1>
         <p className="mt-6 max-w-xl text-lg text-gray-300">
-          Con Tonki, tus clientes acumulan puntos y tus ventas crecen. 
-          Una plataforma fácil, rápida y atractiva.
+          Con Tonki, tus clientes acumulan puntos y tus ventas crecen. Una
+          plataforma fácil, rápida y atractiva.
         </p>
         <div className="mt-8 flex space-x-4">
           <button className="px-6 py-3 bg-[#F6C941] text-black font-semibold rounded-lg hover:bg-yellow-400">

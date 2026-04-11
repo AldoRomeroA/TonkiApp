@@ -1,12 +1,24 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  signMessage,
+  isConnected,
+  requestAccess,
+} from "@stellar/freighter-api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+
+  function redirect(data: { redirectTo?: string; user?: { type?: string } }) {
+    const dest =
+      data.redirectTo ??
+      (data.user?.type === "admin" ? "/admin/dashboard" : "/dashboard");
+    router.push(dest);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,7 +32,7 @@ export default function LoginPage() {
 
     const data = await res.json();
     if (res.ok) {
-      router.push("/dashboard");
+      redirect(data);
     } else {
       setError(data.error || "Error en login");
     }
@@ -28,19 +40,34 @@ export default function LoginPage() {
 
   async function handleWalletLogin() {
     try {
-      if (typeof window === "undefined" || !window.freighterApi) {
+      // 1. Revisar si se encuentra descargada la extension/aplicasion
+      const isAppConnected = await isConnected();
+
+      if (isAppConnected.isConnected == false) {
         setError("Freighter no está disponible. Instala la extensión.");
         return;
       }
 
-      // 1. Pedir dirección pública
-      const publicKey = await window.freighterApi.getPublicKey();
+      // 2. Revisar autorizacion a la wallet por parte del usuario
+      const accessRes = await requestAccess();
+      if (accessRes.error) {
+        setError("Acceso denegado. Aprueba la conexión en Freighter.");
+        return;
+      }
+      const publicKey = accessRes.address;
 
-      // 2. Firmar challenge
+      // 3. Firmar challenge
       const challenge = "Login con TonkiApp";
-      const signature = await window.freighterApi.signTransaction(challenge);
 
-      // 3. Enviar al backend
+      const signRes = await signMessage(challenge, { address: publicKey });
+      if (signRes.error) {
+        setError("No se pudo firmar el mensaje. Intenta de nuevo.");
+        return;
+      }
+
+      const signature = signRes.signedMessage;
+
+      // 4. Enviar al backend
       const res = await fetch("/api/auth/wallet-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -10,6 +10,7 @@ enum RewardStatus {
 }
 
 datasource db {
+  //fk it me rendi, no se podia realizar la coneccion con hostinger incluso cambiando los caracteres a Ascii y todo
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
@@ -19,16 +20,18 @@ generator client {
 }
 
 model User {
-  user_id        String   @id @default(uuid()) @db.Char(32)
-  email          String   @unique @db.VarChar(100)
-  name           String   @db.VarChar(100)
-  wallet_address String?  @unique
+  // Cambie user-id a 36 char por los -
+  user_id        String    @id @default(uuid()) @db.Char(36)
+  // Quite que el email fuera unico igual que la wallet temporalmente para pruebas
+  email          String?   @db.VarChar(100)
+  name           String    @db.VarChar(100)
+  wallet_address String?
   age            Int?
   birth_date     DateTime?
-  type           String   @db.VarChar(100)
-  status         String   @default("active")
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  type           String    @db.VarChar(100)
+  status         String    @default("active")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
 
   credentials     Credential[]
   establishments  Establishment[]
@@ -37,8 +40,8 @@ model User {
 }
 
 model Credential {
-  credential_id String   @id @default(uuid()) @db.Char(32)
-  user_id       String   @db.Char(32)
+  credential_id String   @id @default(uuid()) @db.Char(36)
+  user_id       String   @db.Char(36)
   username      String   @unique @db.VarChar(100)
   password_hash String   @db.VarChar(256)
   created_at    DateTime @default(now())
@@ -48,36 +51,36 @@ model Credential {
 }
 
 model Establishment {
-  establishment_id String   @id @default(uuid()) @db.Char(32)
-  admin_id         String   @db.Char(32)
+  establishment_id String   @id @default(uuid()) @db.Char(36)
+  admin_id         String   @db.Char(36)
   name             String   @db.VarChar(150)
   address          String?  @db.VarChar(255)
   category         String?  @db.VarChar(100)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
-  admin     User      @relation(fields: [admin_id], references: [user_id])
-  rewards   Reward[]
+  admin   User     @relation(fields: [admin_id], references: [user_id])
+  rewards Reward[]
 }
 
 model Reward {
-  reward_id       String   @id @default(uuid()) @db.Char(32)
-  user_id         String   @db.Char(32)
-  establishment_id String  @db.Char(32)
-  title           String   @db.VarChar(150)
-  description     String?
-  points          Int      @default(0)
-  status          String   @default("active")
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  reward_id        String   @id @default(uuid()) @db.Char(36)
+  user_id          String   @db.Char(36)
+  establishment_id String   @db.Char(36)
+  title            String   @db.VarChar(150)
+  description      String?
+  points           Int      @default(0)
+  status           String   @default("active")
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
   user          User          @relation(fields: [user_id], references: [user_id])
   establishment Establishment @relation(fields: [establishment_id], references: [establishment_id])
 }
 
 model AirdropConfig {
-  config_id          String   @id @default(uuid()) @db.Char(32)
-  user_id            String   @db.Char(32)
+  config_id          String   @id @default(uuid()) @db.Char(36)
+  user_id            String   @db.Char(36)
   amount             Float
   scheduled_date     DateTime
   periodicity_months Int
@@ -85,20 +88,20 @@ model AirdropConfig {
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
 
-  user User @relation(fields: [user_id], references: [user_id])
+  user User         @relation(fields: [user_id], references: [user_id])
   logs AirdropLog[]
 }
 
 model AirdropLog {
-  log_id          String   @id @default(uuid()) @db.Char(32)
-  config_id       String   @db.Char(32)
-  transaction_hash String? @db.VarChar(100)
-  total_amount    Float
-  users_involved  Int
-  executed_at     DateTime @default(now())
-  success         Boolean  @default(true)
-  error_message   String?  @db.VarChar(255)
-  response_json   String?
+  log_id           String   @id @default(uuid()) @db.Char(36)
+  config_id        String   @db.Char(36)
+  transaction_hash String?  @db.VarChar(100)
+  total_amount     Float
+  users_involved   Int
+  executed_at      DateTime @default(now())
+  success          Boolean  @default(true)
+  error_message    String?  @db.VarChar(255)
+  response_json    String?
 
   config AirdropConfig @relation(fields: [config_id], references: [config_id])
 }
