@@ -87,44 +87,58 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-sm mx-auto mt-10 p-6 border rounded shadow">
-      <h2 className="text-xl font-bold text-center">Iniciar sesión</h2>
+    <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
+      <div className="flex flex-col gap-6 w-full max-w-sm mx-auto p-8 rounded-2xl border border-[#2a2a2a] bg-[#161616] shadow-xl">
+        {/* Logo / Título */}
+        <div className="flex flex-col items-center gap-1 mb-2">
+          <span className="text-3xl font-bold text-[#F6C941] tracking-wide">
+            TonkiApp
+          </span>
+          <p className="text-sm text-neutral-400">Inicia sesión en tu cuenta</p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Usuario o correo"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="border p-2 rounded"
-        />
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Usuario o correo"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
+          />
+          <button
+            type="submit"
+            className="mt-1 bg-[#F6C941] text-[#0B0B0B] font-semibold p-3 rounded-lg hover:bg-[#e0b030] transition-colors"
+          >
+            Entrar
+          </button>
+        </form>
 
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 rounded"
-        />
+        {/* Separador */}
+        <div className="flex items-center gap-3">
+          <hr className="flex-1 border-[#2a2a2a]" />
+          <span className="text-xs text-neutral-500">o continúa con</span>
+          <hr className="flex-1 border-[#2a2a2a]" />
+        </div>
 
+        {/* Wallet */}
         <button
-          type="submit"
-          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          onClick={handleWalletLogin}
+          className="border border-[#F6C941] text-[#F6C941] font-semibold p-3 rounded-lg hover:bg-[#F6C941] hover:text-[#0B0B0B] transition-colors"
         >
-          Entrar
+          Conectar Wallet (Freighter)
         </button>
-      </form>
 
-      <hr />
-
-      <button
-        onClick={handleWalletLogin}
-        className="bg-green-600 text-white p-2 rounded hover:bg-green-700"
-      >
-        Conectar Wallet (Frighter)
-      </button>
-
-      {error && <p className="text-red-600 text-center">{error}</p>}
+        {/* Error */}
+        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+      </div>
     </div>
   );
 }
