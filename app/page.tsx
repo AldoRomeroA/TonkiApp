@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -10,9 +11,9 @@ export default function Home() {
           <span className="text-xl font-bold text-[#FFF]">Tonki</span>
         </div>
         <nav className="space-x-6">
-          <a href="#features" className="hover:text-[#F6C941]">
+          <Link href="/details" className="hover:text-[#F6C941]">
             Características
-          </a>
+          </Link>
           <a href="#contact" className="hover:text-[#F6C941]">
             Contacto
           </a>
@@ -29,12 +30,18 @@ export default function Home() {
           plataforma fácil, rápida y atractiva.
         </p>
         <div className="mt-8 flex space-x-4">
-          <button className="px-6 py-3 bg-[#F6C941] text-black font-semibold rounded-lg hover:bg-yellow-400">
+          <Link
+            href="/login"
+            className="px-6 py-3 bg-[#F6C941] text-black font-semibold rounded-lg hover:bg-yellow-400"
+          >
             Empieza ahora
-          </button>
-          <button className="px-6 py-3 border border-[#F6C941] text-[#F6C941] rounded-lg hover:bg-[#F6C941] hover:text-black">
+          </Link>
+          <Link
+            href="/details"
+            className="px-6 py-3 border border-[#F6C941] text-[#F6C941] rounded-lg hover:bg-[#F6C941] hover:text-black"
+          >
             Saber más
-          </button>
+          </Link>
         </div>
       </section>
 

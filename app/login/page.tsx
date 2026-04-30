@@ -1,73 +1,212 @@
 "use client";
-import { useState } from "react";
+import { memo, useCallback, useReducer } from "react";
 import { useRouter } from "next/navigation";
 import {
   signMessage,
   isConnected,
   requestAccess,
 } from "@stellar/freighter-api";
+import { AUTH_CHALLENGE } from "src/lib/auth/constants";
+
+type LoginState = {
+  username: string;
+  password: string;
+  error: string;
+  isSubmitting: boolean;
+  isWalletLoading: boolean;
+};
+
+type LoginAction =
+  | { type: "SET_USERNAME"; payload: string }
+  | { type: "SET_PASSWORD"; payload: string }
+  | { type: "SET_ERROR"; payload: string }
+  | { type: "SET_SUBMITTING"; payload: boolean }
+  | { type: "SET_WALLET_LOADING"; payload: boolean };
+
+const initialState: LoginState = {
+  username: "",
+  password: "",
+  error: "",
+  isSubmitting: false,
+  isWalletLoading: false,
+};
+
+function loginReducer(state: LoginState, action: LoginAction): LoginState {
+  switch (action.type) {
+    case "SET_USERNAME":
+      return { ...state, username: action.payload };
+    case "SET_PASSWORD":
+      return { ...state, password: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.payload };
+    case "SET_WALLET_LOADING":
+      return { ...state, isWalletLoading: action.payload };
+    default:
+      return state;
+  }
+}
+
+type LoginFormProps = {
+  username: string;
+  password: string;
+  isSubmitting: boolean;
+  onUsernameChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+};
+
+const LoginForm = memo(function LoginForm({
+  username,
+  password,
+  isSubmitting,
+  onUsernameChange,
+  onPasswordChange,
+  onSubmit,
+}: LoginFormProps) {
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-3">
+      <input
+        type="text"
+        placeholder="Usuario o correo"
+        value={username}
+        onChange={(e) => onUsernameChange(e.target.value)}
+        className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
+      />
+      <input
+        type="password"
+        placeholder="Contraseña"
+        value={password}
+        onChange={(e) => onPasswordChange(e.target.value)}
+        className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
+      />
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="mt-1 bg-[#F6C941] text-[#0B0B0B] font-semibold p-3 rounded-lg hover:bg-[#e0b030] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? "Entrando..." : "Entrar"}
+      </button>
+    </form>
+  );
+});
+
+type WalletButtonProps = {
+  isLoading: boolean;
+  onClick: () => void;
+};
+
+const WalletButton = memo(function WalletButton({
+  isLoading,
+  onClick,
+}: WalletButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={isLoading}
+      className="border border-[#F6C941] text-[#F6C941] font-semibold p-3 rounded-lg hover:bg-[#F6C941] hover:text-[#0B0B0B] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+    >
+      {isLoading ? "Conectando..." : "Conectar Wallet (Freighter)"}
+    </button>
+  );
+});
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [state, dispatch] = useReducer(loginReducer, initialState);
   const router = useRouter();
 
-  function redirect(data: { redirectTo?: string; user?: { type?: string } }) {
-    const dest =
-      data.redirectTo ??
-      (data.user?.type === "admin" ? "/admin/dashboard" : "/dashboard");
-    router.push(dest);
-  }
+  const redirect = useCallback(
+    (data: { redirectTo?: string; user?: { type?: string } }) => {
+      const dest =
+        data.redirectTo ??
+        (data.user?.type === "admin" ? "/admin/dashboard" : "/dashboard");
+      router.push(dest);
+    },
+    [router]
+  );
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
+  const handleLoginSuccess = useCallback(
+    (data: { redirectTo?: string; user?: { type?: string } }) => {
       redirect(data);
-    } else {
-      setError(data.error || "Error en login");
-    }
-  }
+    },
+    [redirect]
+  );
 
-  async function handleWalletLogin() {
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      dispatch({ type: "SET_ERROR", payload: "" });
+      dispatch({ type: "SET_SUBMITTING", payload: true });
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: state.username,
+            password: state.password,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          handleLoginSuccess(data);
+          return;
+        }
+
+        dispatch({
+          type: "SET_ERROR",
+          payload: data.error || "Error en inicio de sesión",
+        });
+      } catch (err) {
+        console.error(err);
+        dispatch({
+          type: "SET_ERROR",
+          payload: "No se pudo iniciar sesión",
+        });
+      } finally {
+        dispatch({ type: "SET_SUBMITTING", payload: false });
+      }
+    },
+    [handleLoginSuccess, state.password, state.username]
+  );
+
+  const handleWalletLogin = useCallback(async () => {
+    dispatch({ type: "SET_ERROR", payload: "" });
+    dispatch({ type: "SET_WALLET_LOADING", payload: true });
     try {
-      // 1. Revisar si se encuentra descargada la extension/aplicasion
       const isAppConnected = await isConnected();
 
       if (isAppConnected.isConnected == false) {
-        setError("Freighter no está disponible. Instala la extensión.");
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Freighter no está disponible. Instala la extensión.",
+        });
         return;
       }
 
-      // 2. Revisar autorizacion a la wallet por parte del usuario
       const accessRes = await requestAccess();
       if (accessRes.error) {
-        setError("Acceso denegado. Aprueba la conexión en Freighter.");
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Acceso denegado. Aprueba la conexión en Freighter.",
+        });
         return;
       }
       const publicKey = accessRes.address;
 
-      // 3. Firmar challenge
-      const challenge = "Login con TonkiApp";
-
-      const signRes = await signMessage(challenge, { address: publicKey });
+      const signRes = await signMessage(AUTH_CHALLENGE, { address: publicKey });
       if (signRes.error) {
-        setError("No se pudo firmar el mensaje. Intenta de nuevo.");
+        dispatch({
+          type: "SET_ERROR",
+          payload: "No se pudo firmar el mensaje. Intenta de nuevo.",
+        });
         return;
       }
 
       const signature = signRes.signedMessage;
 
-      // 4. Enviar al backend
       const res = await fetch("/api/auth/wallet-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,15 +215,31 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (res.ok) {
-        router.push("/dashboard");
+        handleLoginSuccess(data);
       } else {
-        setError(data.error || "Error en login con wallet");
+        dispatch({
+          type: "SET_ERROR",
+          payload: data.error || "Error en login con wallet",
+        });
       }
     } catch (err) {
       console.error(err);
-      setError("No se pudo conectar la wallet");
+      dispatch({
+        type: "SET_ERROR",
+        payload: "No se pudo conectar la wallet",
+      });
+    } finally {
+      dispatch({ type: "SET_WALLET_LOADING", payload: false });
     }
-  }
+  }, [handleLoginSuccess]);
+
+  const handleUsernameChange = useCallback((value: string) => {
+    dispatch({ type: "SET_USERNAME", payload: value });
+  }, []);
+
+  const handlePasswordChange = useCallback((value: string) => {
+    dispatch({ type: "SET_PASSWORD", payload: value });
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
@@ -97,29 +252,14 @@ export default function LoginPage() {
           <p className="text-sm text-neutral-400">Inicia sesión en tu cuenta</p>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input
-            type="text"
-            placeholder="Usuario o correo"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
-          />
-          <button
-            type="submit"
-            className="mt-1 bg-[#F6C941] text-[#0B0B0B] font-semibold p-3 rounded-lg hover:bg-[#e0b030] transition-colors"
-          >
-            Entrar
-          </button>
-        </form>
+        <LoginForm
+          username={state.username}
+          password={state.password}
+          isSubmitting={state.isSubmitting}
+          onUsernameChange={handleUsernameChange}
+          onPasswordChange={handlePasswordChange}
+          onSubmit={handleSubmit}
+        />
 
         {/* Separador */}
         <div className="flex items-center gap-3">
@@ -128,16 +268,15 @@ export default function LoginPage() {
           <hr className="flex-1 border-[#2a2a2a]" />
         </div>
 
-        {/* Wallet */}
-        <button
+        <WalletButton
           onClick={handleWalletLogin}
-          className="border border-[#F6C941] text-[#F6C941] font-semibold p-3 rounded-lg hover:bg-[#F6C941] hover:text-[#0B0B0B] transition-colors"
-        >
-          Conectar Wallet (Freighter)
-        </button>
+          isLoading={state.isWalletLoading}
+        />
 
         {/* Error */}
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+        {state.error && (
+          <p className="text-red-400 text-sm text-center">{state.error}</p>
+        )}
       </div>
     </div>
   );
