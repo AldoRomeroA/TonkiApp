@@ -17,6 +17,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 model User {
@@ -37,6 +38,36 @@ model User {
   establishments  Establishment[]
   rewards         Reward[]
   airdrop_configs AirdropConfig[]
+  posts           Post[]
+}
+
+model Post {
+  post_id            String    @id @default(uuid()) @db.Char(36)
+  author_id          String    @db.Char(36)
+  title              String    @db.VarChar(500)
+  body               String?   @db.Text
+  view_count         Int       @default(0)
+  content_edited_at  DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  author       User             @relation(fields: [author_id], references: [user_id])
+  attachments  PostAttachment[]
+
+  @@index([created_at(sort: Desc), post_id(sort: Asc)])
+  @@index([author_id, created_at(sort: Desc), post_id(sort: Asc)])
+}
+
+model PostAttachment {
+  attachment_id String  @id @default(uuid()) @db.Char(36)
+  post_id       String  @db.Char(36)
+  url           String  @db.VarChar(2048)
+  mime_type     String  @db.VarChar(255)
+  original_name String? @db.VarChar(255)
+
+  post Post @relation(fields: [post_id], references: [post_id], onDelete: Cascade)
+
+  @@index([post_id])
 }
 
 model Credential {

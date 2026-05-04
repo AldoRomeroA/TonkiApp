@@ -3,16 +3,18 @@ import Image from "next/image";
 
 export default function DetailsPage() {
   return (
-    <main className="min-h-screen bg-[#0B0B0B] text-white px-6 py-12">
+    <main className="min-h-screen bg-tonki-canvas px-6 py-12 text-tonki-text sm:px-8 sm:py-16">
       <div className="mx-auto w-full max-w-4xl">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#F6C941]">Tonki</h1>
-          <p className="mt-3 text-lg text-neutral-300">
-            Connecting hives, distributing value.
+        <header className="mb-12 text-center sm:mb-16">
+          <h1 className="text-4xl font-bold tracking-tight text-tonki-accent md:text-5xl lg:text-6xl">
+            Tonki
+          </h1>
+          <p className="mt-4 text-lg text-tonki-text-secondary md:text-xl">
+            Conectamos colmenas, distribuimos valor.
           </p>
         </header>
 
-        <div className="mb-12 overflow-hidden rounded-2xl border border-[#2a2a2a]">
+        <div className="mb-12 overflow-hidden rounded-2xl border border-tonki-border sm:mb-16">
           <Image
             src="/tonki-details.png"
             alt="Infografia de propuesta de valor Tonki"
@@ -23,38 +25,38 @@ export default function DetailsPage() {
           />
         </div>
 
-        <section className="space-y-8">
+        <section className="space-y-12 sm:space-y-16">
           <article>
-            <h2 className="text-2xl font-semibold text-[#F6C941] mb-3">
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight text-tonki-accent md:text-3xl">
               El Problema
             </h2>
-            <p className="text-neutral-200 leading-relaxed">
-              Mas del 90% de la inversion en publicidad no genera el ROI
-              esperado. Retener un cliente es hasta 5 veces mas barato que
-              adquirir uno nuevo. Despues del COVID, el costo de adquisicion
-              aumento +15% en 2024.
+            <p className="text-base leading-relaxed text-tonki-text-secondary md:text-lg">
+              Más del 90&nbsp;% de la inversión en publicidad no genera el ROI
+              esperado. Retener un cliente es hasta 5&nbsp;veces más barato que
+              adquirir uno nuevo. Después del COVID, el costo de adquisición
+              aumentó +15&nbsp;% en 2024.
             </p>
           </article>
 
           <article>
-            <h2 className="text-2xl font-semibold text-[#F6C941] mb-3">
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight text-tonki-accent md:text-3xl">
               La Solucion
             </h2>
-            <p className="text-neutral-200 leading-relaxed">
+            <p className="text-base leading-relaxed text-tonki-text-secondary md:text-lg">
               Tonki convierte el marketing en comportamiento medible. En lugar
-              de pagar por impresiones, los negocios envian recompensas directas
+              de pagar por impresiones, los negocios envían recompensas directas
               (XLM/USDC) a sus clientes. Esto permite reactivar clientes
-              inactivos, premiar clientes frecuentes y lanzar campanas
+              inactivos, premiar clientes frecuentes y lanzar campañas
               dirigidas.
             </p>
           </article>
 
           <article>
-            <h2 className="text-2xl font-semibold text-[#F6C941] mb-3">
-              Implementacion
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight text-tonki-accent md:text-3xl">
+              Implementación
             </h2>
-            <p className="text-neutral-200 leading-relaxed">
-              Cada Peso / Dolar esta ligado a una accion medible: frecuencia,
+            <p className="text-base leading-relaxed text-tonki-text-secondary md:text-lg">
+              Cada peso / dólar está ligado a una acción medible: frecuencia,
               ticket promedio y nivel de lealtad. Tonki identifica clientes top,
               inactivos y nuevos, y los activa con incentivos. Todo esto se
               integra con wallets no custodiales y on/off ramp en mainnet
@@ -63,10 +65,10 @@ export default function DetailsPage() {
           </article>
 
           <article>
-            <h2 className="text-2xl font-semibold text-[#F6C941] mb-3">
+            <h2 className="mb-4 text-2xl font-semibold tracking-tight text-tonki-accent md:text-3xl">
               Modelo de Negocio
             </h2>
-            <p className="text-neutral-200 leading-relaxed">
+            <p className="text-base leading-relaxed text-tonki-text-secondary md:text-lg">
               Tonki es un SaaS con planes desde 17 USD hasta 100 USD, con
               despliegue de airdrops, cashback y beneficios adicionales como
               agentes de IA enfocados en marketing.
@@ -74,10 +76,10 @@ export default function DetailsPage() {
           </article>
         </section>
 
-        <div className="mt-12">
+        <div className="mt-12 sm:mt-16">
           <Link
             href="/"
-            className="inline-flex rounded-lg border border-[#F6C941] px-5 py-3 text-[#F6C941] hover:bg-[#F6C941] hover:text-black transition-colors"
+            className="inline-flex rounded-xl border border-tonki-border-strong px-6 py-3 text-base font-semibold text-tonki-accent transition-colors hover:border-tonki-accent hover:bg-tonki-accent/10"
           >
             Volver al inicio
           </Link>

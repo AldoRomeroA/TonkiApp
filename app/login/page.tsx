@@ -1,12 +1,47 @@
 "use client";
-import { memo, useCallback, useReducer } from "react";
-import { useRouter } from "next/navigation";
+import { memo, Suspense, useCallback, useReducer } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   signMessage,
   isConnected,
   requestAccess,
 } from "@stellar/freighter-api";
-import { AUTH_CHALLENGE } from "src/lib/auth/constants";
+import { readJsonSafely } from "src/lib/api/readJsonSafely";
+import type { AuthResponse, UserRole } from "src/types/auth";
+
+function sanitizeReturnPath(
+  raw: string | null,
+  role: UserRole
+): string | null {
+  if (!raw?.trim()) return null;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(raw.trim());
+  } catch {
+    return null;
+  }
+  const pathOnly = decoded.split(/[?#]/, 1)[0] ?? "";
+  if (
+    pathOnly.startsWith("//") ||
+    !pathOnly.startsWith("/") ||
+    pathOnly === "/login"
+  ) {
+    return null;
+  }
+  if (/[\x00-\x1f]/.test(pathOnly)) return null;
+  if (!/^\/[-\w./]*$/.test(pathOnly)) return null;
+
+  if (pathOnly.startsWith("/admin")) {
+    return role === "admin" ? pathOnly : null;
+  }
+  if (pathOnly.startsWith("/dashboard")) {
+    return pathOnly;
+  }
+  if (pathOnly.startsWith("/account")) {
+    return pathOnly;
+  }
+  return null;
+}
 
 type LoginState = {
   username: string;
@@ -66,25 +101,25 @@ const LoginForm = memo(function LoginForm({
   onSubmit,
 }: LoginFormProps) {
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3">
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <input
         type="text"
         placeholder="Usuario o correo"
         value={username}
         onChange={(e) => onUsernameChange(e.target.value)}
-        className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
+        className="rounded-xl border border-tonki-border bg-tonki-canvas px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
       />
       <input
         type="password"
         placeholder="Contraseña"
         value={password}
         onChange={(e) => onPasswordChange(e.target.value)}
-        className="bg-[#0B0B0B] border border-[#2a2a2a] text-neutral-100 placeholder-neutral-500 p-3 rounded-lg focus:outline-none focus:border-[#F6C941] transition-colors"
+        className="rounded-xl border border-tonki-border bg-tonki-canvas px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-1 bg-[#F6C941] text-[#0B0B0B] font-semibold p-3 rounded-lg hover:bg-[#e0b030] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+        className="mt-1 rounded-xl bg-tonki-accent px-4 py-3 font-semibold text-tonki-accent-fg transition-colors hover:bg-tonki-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
       >
         {isSubmitting ? "Entrando..." : "Entrar"}
       </button>
@@ -105,32 +140,32 @@ const WalletButton = memo(function WalletButton({
     <button
       onClick={onClick}
       disabled={isLoading}
-      className="border border-[#F6C941] text-[#F6C941] font-semibold p-3 rounded-lg hover:bg-[#F6C941] hover:text-[#0B0B0B] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+      className="rounded-xl border border-tonki-accent px-4 py-3 font-semibold text-tonki-accent transition-colors hover:bg-tonki-accent hover:text-tonki-accent-fg disabled:cursor-not-allowed disabled:opacity-70"
     >
       {isLoading ? "Conectando..." : "Conectar Wallet (Freighter)"}
     </button>
   );
 });
 
-export default function LoginPage() {
+function LoginPageInner() {
   const [state, dispatch] = useReducer(loginReducer, initialState);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
 
-  const redirect = useCallback(
-    (data: { redirectTo?: string; user?: { type?: string } }) => {
-      const dest =
-        data.redirectTo ??
-        (data.user?.type === "admin" ? "/admin/dashboard" : "/dashboard");
-      router.push(dest);
+  const redirectAfterAuth = useCallback(
+    (data: AuthResponse) => {
+      const target = sanitizeReturnPath(from, data.role);
+      router.push(target ?? data.redirectTo);
     },
-    [router]
+    [from, router]
   );
 
   const handleLoginSuccess = useCallback(
-    (data: { redirectTo?: string; user?: { type?: string } }) => {
-      redirect(data);
+    (data: AuthResponse) => {
+      redirectAfterAuth(data);
     },
-    [redirect]
+    [redirectAfterAuth]
   );
 
   const handleSubmit = useCallback(
@@ -142,6 +177,7 @@ export default function LoginPage() {
       try {
         const res = await fetch("/api/auth/login", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: state.username,
@@ -149,7 +185,16 @@ export default function LoginPage() {
           }),
         });
 
-        const data = await res.json();
+        type LoginApiBody = AuthResponse & { error?: string };
+
+        const data = await readJsonSafely<LoginApiBody>(res);
+        if (data === null) {
+          dispatch({
+            type: "SET_ERROR",
+            payload: "Respuesta inválida del servidor",
+          });
+          return;
+        }
         if (res.ok) {
           handleLoginSuccess(data);
           return;
@@ -178,7 +223,7 @@ export default function LoginPage() {
     try {
       const isAppConnected = await isConnected();
 
-      if (isAppConnected.isConnected == false) {
+      if (!isAppConnected.isConnected) {
         dispatch({
           type: "SET_ERROR",
           payload: "Freighter no está disponible. Instala la extensión.",
@@ -196,7 +241,28 @@ export default function LoginPage() {
       }
       const publicKey = accessRes.address;
 
-      const signRes = await signMessage(AUTH_CHALLENGE, { address: publicKey });
+      const challengeRes = await fetch("/api/auth/wallet-challenge", {
+        credentials: "include",
+      });
+      const challengeBody = await readJsonSafely<{
+        success?: boolean;
+        message?: string;
+        error?: string;
+      }>(challengeRes);
+
+      if (!challengeRes.ok || !challengeBody?.success || !challengeBody.message) {
+        dispatch({
+          type: "SET_ERROR",
+          payload:
+            challengeBody?.error ??
+            "No se pudo obtener el reto de seguridad para la wallet.",
+        });
+        return;
+      }
+
+      const signRes = await signMessage(challengeBody.message, {
+        address: publicKey,
+      });
       if (signRes.error) {
         dispatch({
           type: "SET_ERROR",
@@ -209,11 +275,21 @@ export default function LoginPage() {
 
       const res = await fetch("/api/auth/wallet-login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicKey, signature }),
       });
 
-      const data = await res.json();
+      type WalletLoginApiBody = AuthResponse & { error?: string };
+
+      const data = await readJsonSafely<WalletLoginApiBody>(res);
+      if (data === null) {
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Respuesta inválida del servidor",
+        });
+        return;
+      }
       if (res.ok) {
         handleLoginSuccess(data);
       } else {
@@ -242,14 +318,16 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B0B0B]">
-      <div className="flex flex-col gap-6 w-full max-w-sm mx-auto p-8 rounded-2xl border border-[#2a2a2a] bg-[#161616] shadow-xl">
+    <div className="flex min-h-screen items-center justify-center bg-tonki-canvas px-4">
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-8 rounded-2xl border border-tonki-border bg-tonki-surface p-8 shadow-2xl shadow-black/40">
         {/* Logo / Título */}
-        <div className="flex flex-col items-center gap-1 mb-2">
-          <span className="text-3xl font-bold text-[#F6C941] tracking-wide">
+        <div className="mb-0 flex flex-col items-center gap-2">
+          <span className="text-3xl font-bold tracking-tight text-tonki-accent sm:text-4xl">
             TonkiApp
           </span>
-          <p className="text-sm text-neutral-400">Inicia sesión en tu cuenta</p>
+          <p className="text-center text-sm text-tonki-text-muted">
+            Inicia sesión en tu cuenta
+          </p>
         </div>
 
         <LoginForm
@@ -262,10 +340,12 @@ export default function LoginPage() {
         />
 
         {/* Separador */}
-        <div className="flex items-center gap-3">
-          <hr className="flex-1 border-[#2a2a2a]" />
-          <span className="text-xs text-neutral-500">o continúa con</span>
-          <hr className="flex-1 border-[#2a2a2a]" />
+        <div className="flex items-center gap-4">
+          <hr className="flex-1 border-tonki-border" />
+          <span className="text-xs font-medium uppercase tracking-wider text-tonki-text-faint">
+            o continúa con
+          </span>
+          <hr className="flex-1 border-tonki-border" />
         </div>
 
         <WalletButton
@@ -275,9 +355,23 @@ export default function LoginPage() {
 
         {/* Error */}
         {state.error && (
-          <p className="text-red-400 text-sm text-center">{state.error}</p>
+          <p className="text-center text-sm text-tonki-danger">{state.error}</p>
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-tonki-canvas">
+          <p className="text-sm text-tonki-text-muted">Cargando…</p>
+        </div>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
   );
 }

@@ -1,8 +1,24 @@
 @import "tailwindcss";
 
+/* Tonki — paleta y tokens (espaciado vía utilidades Tailwind: 4, 8, 12, 16…) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tonki-canvas: #09090b;
+  --tonki-surface: #121214;
+  --tonki-elevated: #18181b;
+  --tonki-surface-hover: #141416;
+  --tonki-border: #27272a;
+  --tonki-border-strong: #3f3f46;
+  --tonki-text: #fafafa;
+  --tonki-text-secondary: #e4e4e7;
+  --tonki-text-muted: #a1a1aa;
+  --tonki-text-faint: #71717a;
+  --tonki-accent: #f5d675;
+  --tonki-accent-hover: #f6c941;
+  --tonki-accent-fg: #0a0a0b;
+  --tonki-danger: #f87171;
+  --tonki-danger-muted: #fecaca;
+  --background: var(--tonki-canvas);
+  --foreground: var(--tonki-text);
 }
 
 @theme inline {
@@ -10,17 +26,25 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-tonki-canvas: var(--tonki-canvas);
+  --color-tonki-surface: var(--tonki-surface);
+  --color-tonki-elevated: var(--tonki-elevated);
+  --color-tonki-surface-hover: var(--tonki-surface-hover);
+  --color-tonki-border: var(--tonki-border);
+  --color-tonki-border-strong: var(--tonki-border-strong);
+  --color-tonki-text: var(--tonki-text);
+  --color-tonki-text-secondary: var(--tonki-text-secondary);
+  --color-tonki-text-muted: var(--tonki-text-muted);
+  --color-tonki-text-faint: var(--tonki-text-faint);
+  --color-tonki-accent: var(--tonki-accent);
+  --color-tonki-accent-hover: var(--tonki-accent-hover);
+  --color-tonki-accent-fg: var(--tonki-accent-fg);
+  --color-tonki-danger: var(--tonki-danger);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--tonki-canvas);
+  color: var(--tonki-text);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }

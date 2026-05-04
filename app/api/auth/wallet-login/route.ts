@@ -1,17 +1,43 @@
 // app/api/auth/wallet-login/route.ts
+import { cookies } from "next/headers";
 import prisma from "src/lib/db";
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { createHash } from "crypto";
-import { AUTH_CHALLENGE } from "src/lib/auth/constants";
 import { apiError, apiSuccess } from "src/lib/api/response";
 import { toPublicUserDTO } from "src/lib/auth/dto";
 import {
   walletLoginSchema,
   type WalletLoginInput,
 } from "src/lib/auth/schemas";
+import {
+  attachSessionCookie,
+  createSessionToken,
+} from "src/lib/auth/session";
+import { applyAuthFailureDelay } from "src/lib/auth/security";
 import type { AuthResponse, UserRole } from "src/types/auth";
+import { logAndRespondAuthInfrastructureError } from "src/lib/api/authRouteCatch";
+import {
+  WALLET_NONCE_COOKIE,
+  buildWalletChallengeMessage,
+  clearWalletNonceCookie,
+} from "src/lib/auth/walletChallenge";
 
+/** Debe coincidir con el prefijo que usa Freighter `signMessage` (@stellar/freighter-api). */
 const SIGN_MESSAGE_PREFIX = "Stellar Signed Message:\n";
+const TEST_USERS = [
+  {
+    wallet_address: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    name: "Test User",
+    type: "user" as const,
+    status: "active" as const,
+  },
+  {
+    wallet_address: "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBRD",
+    name: "Test Admin",
+    type: "admin" as const,
+    status: "active" as const,
+  },
+];
 
 export async function POST(req: Request) {
   try {
@@ -19,34 +45,57 @@ export async function POST(req: Request) {
     try {
       body = (await req.json()) as WalletLoginInput;
     } catch {
-      return apiError("Error de autenticacion: cuerpo JSON invalido", 400);
+      return apiError("Error de autenticación: cuerpo JSON inválido", 400);
     }
 
     const parsed = walletLoginSchema.safeParse(body);
     if (!parsed.success) {
-      return apiError("Error de autenticacion: datos incompletos", 400);
+      return apiError("Error de autenticación: datos incompletos", 400);
     }
     const { publicKey, signature } = parsed.data;
 
+    const jar = await cookies();
+    const expectedNonce =
+      jar.get(WALLET_NONCE_COOKIE)?.value?.trim().toLowerCase() ?? null;
+
     let isValid = false;
+    let expectedMessage = "";
+    if (expectedNonce && /^[0-9a-f]{32}$/i.test(expectedNonce)) {
+      expectedMessage = buildWalletChallengeMessage(expectedNonce);
+    }
+
     try {
+      if (!expectedMessage) {
+        await applyAuthFailureDelay();
+        const res = apiError(
+          "Error de autenticación: solicita un nuevo reto de wallet",
+          401
+        );
+        clearWalletNonceCookie(res);
+        return res;
+      }
+
       const keypair = StellarSdk.Keypair.fromPublicKey(publicKey);
 
-      // Reconstrucción del hash del mensaje que se firmó originalmente
       const messageHash = createHash("sha256")
-        .update(SIGN_MESSAGE_PREFIX + AUTH_CHALLENGE)
+        .update(SIGN_MESSAGE_PREFIX + expectedMessage)
         .digest();
 
       const signatureBytes = Buffer.from(signature, "base64");
 
-      // Verificación de la firma usando la llave pública
       isValid = keypair.verify(messageHash, signatureBytes);
-    } catch (err) {
-      return apiError("Error de autenticacion: firma invalida", 401);
+    } catch {
+      await applyAuthFailureDelay();
+      const res = apiError("Error de autenticación: firma inválida", 401);
+      clearWalletNonceCookie(res);
+      return res;
     }
 
     if (!isValid) {
-      return apiError("Error de autenticacion: firma invalida", 401);
+      await applyAuthFailureDelay();
+      const res = apiError("Error de autenticación: firma inválida", 401);
+      clearWalletNonceCookie(res);
+      return res;
     }
 
     let user = await prisma.user.findFirst({
@@ -54,28 +103,40 @@ export async function POST(req: Request) {
     });
     // Registro automático si el usuario no existe
     if (!user) {
-      const shortKey = `${publicKey.slice(0, 6)}…${publicKey.slice(-4)}`;
-      
-      // TODO(wallet-onboarding):
-      // 1) Crear un "perfil pendiente" con email opcional y estado "pending_profile".
-      // 2) Generar y persistir un token de onboarding (TTL corto, un solo uso).
-      // 3) Enviar email de verificación si el usuario provee correo en el primer paso.
-      // 4) Exponer `redirectTo: "/onboarding"` hasta completar perfil.
-      // 5) Marcar `status: "active"` solo cuando email y datos mínimos estén validados.
-      // Referencia de implementación mínima:
-      // - Tabla user_profile_onboarding(user_id, token, expires_at, consumed_at)
-      // - Endpoint POST /api/auth/complete-profile para cerrar onboarding
-      // - Validar token + wallet ownership antes de aceptar cambios
+      const hardcodedUser =
+        process.env.NODE_ENV === "development"
+          ? TEST_USERS.find((testUser) => testUser.wallet_address === publicKey)
+          : undefined;
 
-      user = await prisma.user.create({
-        data: {
-          name: `Wallet ${shortKey}`,
-          wallet_address: publicKey,
-          type: "user",
-          status: "active",
-        },
-      });
+      if (hardcodedUser) {
+        user = await prisma.user.create({
+          data: {
+            name: hardcodedUser.name,
+            wallet_address: hardcodedUser.wallet_address,
+            type: hardcodedUser.type,
+            status: hardcodedUser.status,
+          },
+        });
+      } else {
+        const shortKey = `${publicKey.slice(0, 6)}…${publicKey.slice(-4)}`;
+
+        user = await prisma.user.create({
+          data: {
+            name: `Wallet ${shortKey}`,
+            wallet_address: publicKey,
+            type: "user",
+            status: "active",
+          },
+        });
+      }
     }
+
+    if (user.status !== "active") {
+      const res = apiError("Cuenta suspendida", 403);
+      clearWalletNonceCookie(res);
+      return res;
+    }
+
     // Lógica de reenvio basada en el rol
     const role = user.type as UserRole;
     const redirectTo = role === "admin" ? "/admin/dashboard" : "/dashboard";
@@ -85,13 +146,40 @@ export async function POST(req: Request) {
     });
 
     const responseBody: AuthResponse = {
-      message: "Inicio de sesion exitoso",
+      message: "Inicio de sesión exitoso",
       redirectTo,
+      role,
       user: toPublicUserDTO(user, credential?.username ?? null),
     };
 
-    return apiSuccess(responseBody);
-  } catch {
-    return apiError("Error de autenticacion: error interno", 500);
+    try {
+      const token = await createSessionToken({
+        userId: user.user_id,
+        role,
+      });
+      const res = apiSuccess(responseBody);
+      clearWalletNonceCookie(res);
+      attachSessionCookie(res, token);
+      return res;
+    } catch {
+      const res = apiError(
+        "Error de autenticación: servidor sin AUTH_SECRET válido",
+        500
+      );
+      clearWalletNonceCookie(res);
+      return res;
+    }
+  } catch (err) {
+    const infra = logAndRespondAuthInfrastructureError(
+      "[api/auth/wallet-login]",
+      err
+    );
+    if (infra) {
+      clearWalletNonceCookie(infra);
+      return infra;
+    }
+    const res = apiError("Error de autenticación: error interno", 500);
+    clearWalletNonceCookie(res);
+    return res;
   }
 }
