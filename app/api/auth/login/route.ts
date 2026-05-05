@@ -12,8 +12,9 @@ import {
   createSessionToken,
 } from "src/lib/auth/session";
 import { applyAuthFailureDelay } from "src/lib/auth/security";
-import type { AuthResponse, UserRole } from "src/types/auth";
+import type { AuthResponse } from "src/types/auth";
 import { logAndRespondAuthInfrastructureError } from "src/lib/api/authRouteCatch";
+import { normalizeUserRole } from "src/lib/auth/userRole";
 
 export async function POST(req: Request) {
   try {
@@ -58,7 +59,13 @@ export async function POST(req: Request) {
       return apiError("Cuenta suspendida", 403);
     }
 
-    const role = credential.user.type as UserRole;
+    const role = normalizeUserRole(credential.user.type);
+    if (!role) {
+      return apiError(
+        "Error de autenticación: rol de cuenta no válido; contacte al administrador",
+        403
+      );
+    }
     const redirectTo = role === "admin" ? "/admin/dashboard" : "/dashboard";
 
     const responseBody: AuthResponse = {

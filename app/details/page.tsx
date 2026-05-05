@@ -1,5 +1,10 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import {
+  IconInstagram,
+  IconX,
+  socialIconLinkClass,
+} from "@/src/components/SocialIcons";
 
 export default function DetailsPage() {
   return (
@@ -74,6 +79,48 @@ export default function DetailsPage() {
               agentes de IA enfocados en marketing.
             </p>
           </article>
+        </section>
+
+        <section className="mt-12 rounded-2xl border border-tonki-border bg-tonki-surface/60 p-8 text-center sm:mt-16 sm:p-10">
+          <h2 className="text-2xl font-semibold tracking-tight text-tonki-accent md:text-3xl">
+            Contacto y redes
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-tonki-text-secondary md:text-lg">
+            ¿Preguntas o colaboraciones? Escríbenos o síguenos.
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-6 sm:flex-row sm:justify-center sm:gap-10">
+            <a
+              href="mailto:support@tonki.io?subject=Consulta%20Tonki"
+              className="text-base font-semibold text-tonki-accent underline-offset-4 transition-colors hover:text-tonki-accent-hover hover:underline"
+            >
+              support@tonki.io
+            </a>
+            <nav
+              aria-label="Redes sociales Tonki"
+              className="flex flex-wrap items-center justify-center gap-4"
+            >
+              <a
+                href="https://www.instagram.com/tonkiapp/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Tonki en Instagram"
+                title="Instagram"
+                className={socialIconLinkClass}
+              >
+                <IconInstagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://x.com/Tonkiapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Tonki en X"
+                title="X"
+                className={socialIconLinkClass}
+              >
+                <IconX className="h-[1.125rem] w-[1.125rem]" />
+              </a>
+            </nav>
+          </div>
         </section>
 
         <div className="mt-12 sm:mt-16">

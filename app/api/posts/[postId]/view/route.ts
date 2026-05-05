@@ -30,19 +30,16 @@ export async function POST(
       return apiError("Post inválido", 400);
     }
 
-    const exists = await prisma.post.findUnique({
-      where: { post_id: pid.data },
-      select: { post_id: true },
-    });
-    if (!exists) {
-      return apiError("Publicación no encontrada", 404);
-    }
-
     // Incrementar vistas sin tocar `updated_at`: un `post.update` dispara @updatedAt
     // y haría que todo el feed marque "Editado" tras la primera vista.
-    await prisma.$executeRaw`
+    const affected = await prisma.$executeRaw`
       UPDATE \`Post\` SET \`view_count\` = \`view_count\` + 1 WHERE \`post_id\` = ${pid.data}
     `;
+    const rowsTouched =
+      typeof affected === "bigint" ? Number(affected) : affected;
+    if (!Number.isFinite(rowsTouched) || rowsTouched === 0) {
+      return apiError("Publicación no encontrada", 404);
+    }
 
     const row = await prisma.post.findUnique({
       where: { post_id: pid.data },

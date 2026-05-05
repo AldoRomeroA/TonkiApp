@@ -50,3 +50,7 @@ tonki-app/
  ├─ public/             # Assets estáticos
  ├─ package.json
  └─ tsconfig.json
+
+Documentación detallada:
+
+- [`ARQUITECTURA_Y_FLUJO_DE_DATOS.md`](./ARQUITECTURA_Y_FLUJO_DE_DATOS.md)

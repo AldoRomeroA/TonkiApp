@@ -232,19 +232,23 @@ export function PostFeed() {
       return;
     }
 
+    const controller = new AbortController();
     void (async () => {
       try {
         const res = await fetch(`/api/posts/${requestedPostId}`, {
           credentials: "include",
+          signal: controller.signal,
         });
         const data = await readJsonSafely<{ success?: boolean; post?: FeedPost }>(res);
         if (res.ok && data?.success === true && data.post) {
           setActivePost(data.post);
         }
-      } catch {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
         // No-op: keep feed usable if deep-link fetch fails.
       }
     })();
+    return () => controller.abort();
   }, [activePost?.post_id, posts, searchParams]);
 
   if (unauthorized) {
@@ -315,6 +319,7 @@ export function PostFeed() {
             className="cursor-pointer border-b border-tonki-border px-5 py-5 transition-colors hover:bg-tonki-surface-hover/80"
             onClick={(event) => onPostClick(event, post)}
             onKeyDown={(event) => {
+              if (!canOpenModalFromTarget(event.target)) return;
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
                 openPost(post);

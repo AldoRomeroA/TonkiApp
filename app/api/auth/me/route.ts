@@ -3,7 +3,7 @@ import { logAndRespondAuthInfrastructureError } from "src/lib/api/authRouteCatch
 import { apiError, apiSuccess } from "src/lib/api/response";
 import { toPublicUserDTO } from "src/lib/auth/dto";
 import { verifySession } from "src/lib/auth/session";
-import type { UserRole } from "src/types/auth";
+import { normalizeUserRole } from "src/lib/auth/userRole";
 
 export async function GET(req: Request) {
   try {
@@ -29,7 +29,10 @@ export async function GET(req: Request) {
       select: { username: true },
     });
 
-    const role = user.type as UserRole;
+    const role = normalizeUserRole(user.type);
+    if (!role) {
+      return apiError("Cuenta con rol no válido", 403);
+    }
 
     return apiSuccess({
       user: toPublicUserDTO(user, credential?.username ?? null),

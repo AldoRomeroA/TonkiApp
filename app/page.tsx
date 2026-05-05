@@ -1,5 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  IconInstagram,
+  IconX,
+  socialIconLinkClass,
+} from "@/src/components/SocialIcons";
 
 export default function Home() {
   return (
@@ -63,11 +68,36 @@ export default function Home() {
           lo antes posible.
         </p>
         <a
-          href="mailto:contacto@tonki.app?subject=Consulta%20Tonki"
+          href="mailto:support@tonki.io?subject=Consulta%20Tonki"
           className="mt-8 inline-block text-base font-semibold text-tonki-accent underline-offset-4 transition-colors hover:text-tonki-accent-hover hover:underline"
         >
-          contacto@tonki.app
+          support@tonki.io
         </a>
+        <nav
+          aria-label="Redes sociales Tonki"
+          className="mt-8 flex flex-wrap items-center justify-center gap-4"
+        >
+          <a
+            href="https://www.instagram.com/tonkiapp/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Tonki en Instagram"
+            title="Instagram"
+            className={socialIconLinkClass}
+          >
+            <IconInstagram className="h-5 w-5" />
+          </a>
+          <a
+            href="https://x.com/Tonkiapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Tonki en X"
+            title="X"
+            className={socialIconLinkClass}
+          >
+            <IconX className="h-[1.125rem] w-[1.125rem]" />
+          </a>
+        </nav>
       </section>
 
       <footer className="mt-auto w-full px-6 py-8 text-center text-sm text-tonki-text-muted sm:px-8">

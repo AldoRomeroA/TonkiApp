@@ -10,6 +10,11 @@ import {
 
 import { readJsonSafely } from "src/lib/api/readJsonSafely";
 import type { AuthMePayload } from "src/types/auth";
+import {
+  AccountSlideOverGroup,
+  AccountSlideOverTrigger,
+  useOpenAccountPanel,
+} from "src/components/AccountSlideOver";
 
 import { AdminComposerTab } from "./AdminComposerTab";
 import { AdminMyPostsTab } from "./AdminMyPostsTab";
@@ -19,6 +24,20 @@ type ApiEnvelope =
   | { success: false; error?: string };
 
 type AdminTab = "compose" | "mine";
+
+function SessionAdminLine({ label }: { label: string }) {
+  const openAccount = useOpenAccountPanel();
+
+  return (
+    <button
+      type="button"
+      onClick={() => openAccount()}
+      className="w-full border-x border-transparent px-4 py-3 text-left text-xs text-tonki-text-faint transition-colors hover:text-tonki-text-secondary sm:text-sm"
+    >
+      {label}
+    </button>
+  );
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -89,62 +108,52 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-tonki-canvas text-tonki-text">
-      <header className="sticky top-0 z-40 border-b border-tonki-border bg-tonki-canvas/90 backdrop-blur-md">
-        <div className="mx-auto grid w-full max-w-[600px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 sm:px-5">
+    <AccountSlideOverGroup>
+      <div className="min-h-screen bg-tonki-canvas text-tonki-text">
+        <header className="sticky top-0 z-40 border-b border-tonki-border bg-tonki-canvas/90 backdrop-blur-md">
+          <div className="mx-auto grid w-full max-w-[600px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 sm:px-5">
+            <Link
+              href="/dashboard"
+              className="justify-self-start text-sm font-semibold text-tonki-text-secondary transition-colors hover:text-tonki-text sm:text-base"
+            >
+              Feed
+            </Link>
+            <h1 className="max-w-[min(260px,calc(100vw-9rem))] justify-self-center text-center text-[15px] font-bold leading-snug sm:max-w-xs sm:text-[17px]">
+              Centro admin
+            </h1>
+            <AccountSlideOverTrigger className="justify-self-end truncate text-sm text-tonki-text-muted transition-colors hover:text-tonki-text-secondary sm:max-w-[min(140px,calc((100vw-10rem)/2))] sm:text-base" />
+          </div>
+
+          <div className="mx-auto grid w-full max-w-[600px] grid-cols-2 border-y border-transparent">
+            {tabs("compose", "Nuevo post")}
+            {tabs("mine", "Mis publicaciones")}
+          </div>
+        </header>
+
+        <main className="mx-auto w-full max-w-[600px] pb-24">
+          <SessionAdminLine label={displayName} />
+
+          <div role="tabpanel">
+            {tab === "compose" ? <AdminComposerTab /> : <AdminMyPostsTab />}
+          </div>
+        </main>
+
+        <nav className="fixed bottom-4 left-4 right-4 z-30 mx-auto flex w-[min(560px,calc(100%-2rem))] justify-center gap-8 rounded-full border border-tonki-border bg-tonki-canvas/95 px-6 py-3 text-sm font-medium text-tonki-text-muted shadow-lg shadow-black/30 backdrop-blur-md md:hidden">
+          <Link
+            href="/"
+            className="transition-colors hover:text-tonki-text-secondary"
+          >
+            Tonki
+          </Link>
           <Link
             href="/dashboard"
-            className="justify-self-start text-sm font-semibold text-tonki-text-secondary transition-colors hover:text-tonki-text sm:text-base"
+            className="transition-colors hover:text-tonki-text-secondary"
           >
             Feed
           </Link>
-          <h1 className="max-w-[min(260px,calc(100vw-9rem))] justify-self-center text-center text-[15px] font-bold leading-snug sm:max-w-xs sm:text-[17px]">
-            Centro admin
-          </h1>
-          <Link
-            href="/account"
-            className="justify-self-end text-sm text-tonki-text-muted transition-colors hover:text-tonki-text-secondary sm:text-base"
-          >
-            Perfil
-          </Link>
-        </div>
-
-        <div className="mx-auto grid w-full max-w-[600px] grid-cols-2 border-y border-transparent">
-          {tabs("compose", "Nuevo post")}
-          {tabs("mine", "Mis publicaciones")}
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-[600px] pb-24">
-        <p className="border-x border-transparent px-4 py-3 text-xs text-tonki-text-faint sm:text-sm">
-          {displayName}
-        </p>
-
-        <div role="tabpanel">
-          {tab === "compose" ? <AdminComposerTab /> : <AdminMyPostsTab />}
-        </div>
-      </main>
-
-      <nav className="fixed bottom-4 left-4 right-4 z-30 mx-auto flex w-[min(560px,calc(100%-2rem))] justify-center gap-8 rounded-full border border-tonki-border bg-tonki-canvas/95 px-6 py-3 text-sm font-medium text-tonki-text-muted shadow-lg shadow-black/30 backdrop-blur-md md:hidden">
-        <Link
-          href="/"
-          className="transition-colors hover:text-tonki-text-secondary"
-        >
-          Tonki
-        </Link>
-        <Link
-          href="/dashboard"
-          className="transition-colors hover:text-tonki-text-secondary"
-        >
-          Feed
-        </Link>
-        <Link
-          href="/account"
-          className="transition-colors hover:text-tonki-text-secondary"
-        >
-          Perfil
-        </Link>
-      </nav>
-    </div>
+          <AccountSlideOverTrigger className="max-w-[5.5rem] truncate transition-colors hover:text-tonki-text-secondary" />
+        </nav>
+      </div>
+    </AccountSlideOverGroup>
   );
 }

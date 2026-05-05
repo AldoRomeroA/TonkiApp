@@ -14,7 +14,8 @@ import {
   createSessionToken,
 } from "src/lib/auth/session";
 import { applyAuthFailureDelay } from "src/lib/auth/security";
-import type { AuthResponse, UserRole } from "src/types/auth";
+import type { AuthResponse } from "src/types/auth";
+import { normalizeUserRole } from "src/lib/auth/userRole";
 import { logAndRespondAuthInfrastructureError } from "src/lib/api/authRouteCatch";
 import {
   WALLET_NONCE_COOKIE,
@@ -137,8 +138,15 @@ export async function POST(req: Request) {
       return res;
     }
 
-    // Lógica de reenvio basada en el rol
-    const role = user.type as UserRole;
+    const role = normalizeUserRole(user.type);
+    if (!role) {
+      const res = apiError(
+        "Error de autenticación: rol de cuenta no válido; contacte al administrador",
+        403
+      );
+      clearWalletNonceCookie(res);
+      return res;
+    }
     const redirectTo = role === "admin" ? "/admin/dashboard" : "/dashboard";
     const credential = await prisma.credential.findFirst({
       where: { user_id: user.user_id },

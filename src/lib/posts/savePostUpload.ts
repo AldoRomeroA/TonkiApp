@@ -120,6 +120,9 @@ export async function savePostUpload(
   const mime = (file.type || "application/octet-stream").toLowerCase();
   const maxBytes =
     options?.maxBytes ?? maxPostUploadBytesForMime(mime);
+  if (Number.isFinite(file.size) && file.size > maxBytes) {
+    throw new PostUploadError("Archivo demasiado grande", "TOO_LARGE");
+  }
   const buf = Buffer.from(await file.arrayBuffer());
   if (buf.length > maxBytes) {
     throw new PostUploadError("Archivo demasiado grande", "TOO_LARGE");

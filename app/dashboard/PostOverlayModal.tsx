@@ -45,6 +45,10 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose, post]);
 
+  const imageAttachments = post ? filterImageAttachments(post.attachments) : [];
+  const videoAttachments = post ? filterVideoAttachments(post.attachments) : [];
+  const otherAttachments = post ? nonImageNonVideoAttachments(post) : [];
+
   return (
     <AnimatePresence>
       {post ? (
@@ -106,10 +110,10 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
                   </p>
                 ) : null}
 
-                {filterImageAttachments(post.attachments).length > 0 ? (
+                {imageAttachments.length > 0 ? (
                   <div className="mt-4">
                     <ImageAttachmentGrid
-                      items={filterImageAttachments(post.attachments).map((a) => ({
+                      items={imageAttachments.map((a) => ({
                         key: a.attachment_id,
                         src: a.url,
                         alt: a.original_name?.trim() ?? "",
@@ -118,9 +122,9 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
                   </div>
                 ) : null}
 
-                {filterVideoAttachments(post.attachments).length > 0 ? (
+                {videoAttachments.length > 0 ? (
                   <ul className="mt-4 flex flex-col gap-3">
-                    {filterVideoAttachments(post.attachments).map((v) => (
+                    {videoAttachments.map((v) => (
                       <li
                         key={v.attachment_id}
                         className="overflow-hidden rounded-2xl border border-tonki-border bg-black"
@@ -137,9 +141,9 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
                   </ul>
                 ) : null}
 
-                {nonImageNonVideoAttachments(post).length > 0 ? (
+                {otherAttachments.length > 0 ? (
                   <ul className="mt-4 flex flex-col gap-2">
-                    {nonImageNonVideoAttachments(post).map((f) => (
+                    {otherAttachments.map((f) => (
                       <li key={f.attachment_id}>
                         <a
                           href={f.url}
