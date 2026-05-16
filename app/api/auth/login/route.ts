@@ -1,12 +1,8 @@
 // app/api/auth/login/route.ts
-import prisma from "src/lib/db";
-import bcrypt from "bcrypt";
+import { parseRequestJson } from "src/lib/api/readJsonSafely";
 import { apiError, apiSuccess } from "src/lib/api/response";
 import { toPublicUserDTO } from "src/lib/auth/dto";
-import {
-  passwordLoginSchema,
-  type PasswordLoginInput,
-} from "src/lib/auth/schemas";
+import { passwordLoginSchema } from "src/lib/auth/schemas";
 import {
   attachSessionCookie,
   createSessionToken,
@@ -15,42 +11,27 @@ import { applyAuthFailureDelay } from "src/lib/auth/security";
 import type { AuthResponse } from "src/types/auth";
 import { logAndRespondAuthInfrastructureError } from "src/lib/api/authRouteCatch";
 import { normalizeUserRole } from "src/lib/auth/userRole";
+import { validateCredentialByUsernameOrEmail } from "src/services/authService";
 
 export async function POST(req: Request) {
   try {
-    let body: PasswordLoginInput;
-    try {
-      body = (await req.json()) as PasswordLoginInput;
-    } catch {
+    const raw = await parseRequestJson(req);
+    if (raw === null) {
       return apiError("Error de autenticación: cuerpo JSON inválido", 400);
     }
 
-    const parsed = passwordLoginSchema.safeParse(body);
+    const parsed = passwordLoginSchema.safeParse(raw);
     if (!parsed.success) {
       return apiError("Error de autenticación: datos incompletos", 400);
     }
     const { username, password } = parsed.data;
 
-    const credential = await prisma.credential.findFirst({
-      where: {
-        OR: [{ username }, { user: { email: username } }],
-      },
-      include: { user: true },
-    });
+    const credential = await validateCredentialByUsernameOrEmail(
+      username,
+      password
+    );
 
     if (!credential) {
-      await applyAuthFailureDelay();
-      return apiError("Error de autenticación: credenciales inválidas", 401);
-    }
-
-    if (!credential.password_hash) {
-      await applyAuthFailureDelay();
-      return apiError("Error de autenticación: credenciales inválidas", 401);
-    }
-
-    const isValid = await bcrypt.compare(password, credential.password_hash);
-
-    if (!isValid) {
       await applyAuthFailureDelay();
       return apiError("Error de autenticación: credenciales inválidas", 401);
     }

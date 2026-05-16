@@ -19,6 +19,15 @@ import {
 } from "src/lib/posts/attachmentMime";
 import type { FeedPost, FeedPostAttachment } from "src/lib/posts/feedTypes";
 import { fetchPostsListPage } from "src/lib/posts/fetchPostsListClient";
+import {
+  appendProceduralBatch,
+  isProceduralPostId,
+  PROCEDURAL_LOAD_DELAY_MS,
+  resolveFeedSource,
+  sleep,
+  toFeedItems,
+  type FeedPostItem,
+} from "src/lib/posts/proceduralFeed";
 
 import { ImageAttachmentGrid } from "./ImageAttachmentGrid";
 import { FeedComposer } from "./FeedComposer";
@@ -60,8 +69,10 @@ function PostViewCount({
   const [count, setCount] = useState(initial);
   const ref = useRef<HTMLSpanElement | null>(null);
   const sentRef = useRef(false);
+  const trackViews = !isProceduralPostId(postId);
 
   useEffect(() => {
+    if (!trackViews) return;
     const key = `tonki_view:${postId}`;
     const root = ref.current?.closest("article");
     const el = root ?? ref.current;
@@ -111,7 +122,7 @@ function PostViewCount({
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [postId]);
+  }, [postId, trackViews]);
 
   return (
     <span ref={ref} className="text-sm text-tonki-text-faint">
@@ -121,10 +132,12 @@ function PostViewCount({
 }
 
 export function PostFeed() {
-  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedPostItem[]>([]);
   const [activePost, setActivePost] = useState<FeedPost | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [apiNextCursor, setApiNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const proceduralBatchRef = useRef(0);
+  const canonicalPostsRef = useRef<FeedPost[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [unauthorized, setUnauthorized] = useState(false);
   const loadingRef = useRef(false);
@@ -154,8 +167,27 @@ export function PostFeed() {
       return;
     }
 
-    setPosts((prev) => (append ? [...prev, ...result.posts] : result.posts));
-    setNextCursor(result.nextCursor);
+    if (append) {
+      const seen = new Set(canonicalPostsRef.current.map((p) => p.post_id));
+      const merged = [...canonicalPostsRef.current];
+      for (const post of result.posts) {
+        if (!seen.has(post.post_id)) {
+          seen.add(post.post_id);
+          merged.push(post);
+        }
+      }
+      canonicalPostsRef.current = merged;
+      setFeedItems((prev) => [
+        ...prev,
+        ...toFeedItems(result.posts, cursor ?? "api"),
+      ]);
+    } else {
+      canonicalPostsRef.current = result.posts;
+      proceduralBatchRef.current = 0;
+      const initial = resolveFeedSource(result.posts);
+      setFeedItems(toFeedItems(initial, "init"));
+    }
+    setApiNextCursor(result.nextCursor);
     loadingRef.current = false;
     setLoading(false);
   }, []);
@@ -166,13 +198,33 @@ export function PostFeed() {
     });
   }, [fetchPage]);
 
+  const loadProceduralBatch = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+    setError(null);
+
+    await sleep(PROCEDURAL_LOAD_DELAY_MS);
+
+    const batchIndex = proceduralBatchRef.current;
+    proceduralBatchRef.current += 1;
+    const batch = appendProceduralBatch(canonicalPostsRef.current, batchIndex);
+    setFeedItems((prev) => [...prev, ...batch]);
+
+    loadingRef.current = false;
+    setLoading(false);
+  }, []);
+
   const loadMore = useCallback(() => {
-    if (nextCursor === null || loadingRef.current) return;
-    void fetchPage(nextCursor, true);
-  }, [fetchPage, nextCursor]);
+    if (loadingRef.current) return;
+    if (apiNextCursor !== null) {
+      void fetchPage(apiNextCursor, true);
+      return;
+    }
+    void loadProceduralBatch();
+  }, [apiNextCursor, fetchPage, loadProceduralBatch]);
 
   useEffect(() => {
-    if (nextCursor === null) return;
     const el = sentinelRef.current;
     if (!el) return;
 
@@ -188,7 +240,7 @@ export function PostFeed() {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [loadMore, nextCursor]);
+  }, [loadMore]);
 
   const setPostQuery = useCallback(
     (postId: string | null) => {
@@ -224,7 +276,7 @@ export function PostFeed() {
     }
     if (activePost?.post_id === requestedPostId) return;
 
-    const existing = posts.find((p) => p.post_id === requestedPostId);
+    const existing = feedItems.find((p) => p.post_id === requestedPostId);
     if (existing) {
       queueMicrotask(() => {
         setActivePost(existing);
@@ -249,7 +301,7 @@ export function PostFeed() {
       }
     })();
     return () => controller.abort();
-  }, [activePost?.post_id, posts, searchParams]);
+  }, [activePost?.post_id, feedItems, searchParams]);
 
   if (unauthorized) {
     return (
@@ -267,7 +319,7 @@ export function PostFeed() {
     );
   }
 
-  if (error && posts.length === 0) {
+  if (error && feedItems.length === 0) {
     return (
       <div className="rounded-2xl border border-tonki-border bg-tonki-surface p-8 text-center">
         <p className="text-base text-tonki-danger">{error}</p>
@@ -303,7 +355,7 @@ export function PostFeed() {
           void fetchPage(null, false);
         }}
       />
-      {posts.map((post) => {
+      {feedItems.map((post) => {
         const imgs = filterImageAttachments(post.attachments);
         const vids = filterVideoAttachments(post.attachments);
         const files = nonImageNonVideoAttachments(post.attachments);
@@ -315,7 +367,7 @@ export function PostFeed() {
 
         return (
           <article
-            key={post.post_id}
+            key={post.feedKey}
             className="cursor-pointer border-b border-tonki-border px-5 py-5 transition-colors hover:bg-tonki-surface-hover/80"
             onClick={(event) => onPostClick(event, post)}
             onKeyDown={(event) => {
@@ -432,13 +484,7 @@ export function PostFeed() {
         );
       })}
 
-      {posts.length === 0 && !loading && !error && (
-        <p className="py-12 text-center text-base text-tonki-text-muted">
-          Aún no hay publicaciones. Vuelve más tarde.
-        </p>
-      )}
-
-      {error && posts.length > 0 && (
+      {error && feedItems.length > 0 && (
         <p className="py-4 text-center text-sm text-tonki-danger">{error}</p>
       )}
 

@@ -3,12 +3,10 @@ import { cookies } from "next/headers";
 import prisma from "src/lib/db";
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { createHash } from "crypto";
+import { parseRequestJson } from "src/lib/api/readJsonSafely";
 import { apiError, apiSuccess } from "src/lib/api/response";
 import { toPublicUserDTO } from "src/lib/auth/dto";
-import {
-  walletLoginSchema,
-  type WalletLoginInput,
-} from "src/lib/auth/schemas";
+import { walletLoginSchema } from "src/lib/auth/schemas";
 import {
   attachSessionCookie,
   createSessionToken,
@@ -42,14 +40,12 @@ const TEST_USERS = [
 
 export async function POST(req: Request) {
   try {
-    let body: WalletLoginInput;
-    try {
-      body = (await req.json()) as WalletLoginInput;
-    } catch {
+    const raw = await parseRequestJson(req);
+    if (raw === null) {
       return apiError("Error de autenticación: cuerpo JSON inválido", 400);
     }
 
-    const parsed = walletLoginSchema.safeParse(body);
+    const parsed = walletLoginSchema.safeParse(raw);
     if (!parsed.success) {
       return apiError("Error de autenticación: datos incompletos", 400);
     }
