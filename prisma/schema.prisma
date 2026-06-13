@@ -47,6 +47,7 @@ model Post {
   title              String    @db.VarChar(500)
   body               String?   @db.Text
   view_count         Int       @default(0)
+  share_count        Int       @default(0)
   content_edited_at  DateTime?
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt

@@ -17,13 +17,14 @@ import {
 } from "src/components/AccountSlideOver";
 
 import { AdminComposerTab } from "./AdminComposerTab";
+import { AdminMetricsTab } from "./AdminMetricsTab";
 import { AdminMyPostsTab } from "./AdminMyPostsTab";
 
 type ApiEnvelope =
   | (AuthMePayload & { success: true })
   | { success: false; error?: string };
 
-type AdminTab = "compose" | "mine";
+type AdminTab = "compose" | "mine" | "metrics";
 
 function SessionAdminLine({ label }: { label: string }) {
   const openAccount = useOpenAccountPanel();
@@ -124,9 +125,10 @@ export default function AdminDashboardPage() {
             <AccountSlideOverTrigger className="justify-self-end truncate text-sm text-tonki-text-muted transition-colors hover:text-tonki-text-secondary sm:max-w-[min(140px,calc((100vw-10rem)/2))] sm:text-base" />
           </div>
 
-          <div className="mx-auto grid w-full max-w-[600px] grid-cols-2 border-y border-transparent">
+          <div className="mx-auto grid w-full max-w-[600px] grid-cols-3 border-y border-transparent">
             {tabs("compose", "Nuevo post")}
             {tabs("mine", "Mis publicaciones")}
+            {tabs("metrics", "Métricas")}
           </div>
         </header>
 
@@ -134,7 +136,13 @@ export default function AdminDashboardPage() {
           <SessionAdminLine label={displayName} />
 
           <div role="tabpanel">
-            {tab === "compose" ? <AdminComposerTab /> : <AdminMyPostsTab />}
+            {tab === "compose" ? (
+              <AdminComposerTab />
+            ) : tab === "mine" ? (
+              <AdminMyPostsTab />
+            ) : (
+              <AdminMetricsTab />
+            )}
           </div>
         </main>
 

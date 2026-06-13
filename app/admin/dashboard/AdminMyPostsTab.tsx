@@ -731,7 +731,7 @@ export function AdminMyPostsTab() {
                     </span>
                   ) : null}
                   <span className="ml-auto hidden text-xs text-neutral-600 sm:inline">
-                    {p.view_count} vistas
+                    {p.view_count} vistas · {p.share_count} compartidos
                   </span>
                 </div>
                 <p className="break-words text-[15px] font-semibold text-neutral-100">
@@ -778,7 +778,7 @@ export function AdminMyPostsTab() {
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="text-xs text-neutral-500 sm:hidden">
-                    {p.view_count} vistas
+                    {p.view_count} vistas · {p.share_count} compartidos
                   </span>
                   <button
                     type="button"

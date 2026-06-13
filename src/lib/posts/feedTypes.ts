@@ -15,6 +15,7 @@ export type FeedPost = {
   title: string;
   body: string | null;
   view_count: number;
+  share_count: number;
   created_at: string;
   /** Última modificación (igual a `created_at` hasta la primera edición). */
   updated_at: string;

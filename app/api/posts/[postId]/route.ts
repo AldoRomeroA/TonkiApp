@@ -38,7 +38,7 @@ export async function GET(
     const { postId } = await context.params;
     const pid = postIdParamSchema.safeParse(postId);
     if (!pid.success) {
-      return apiError("Post inválido", 400);
+      return apiError("Post inv?lido", 400);
     }
 
     const post = await prisma.post.findUnique({
@@ -48,6 +48,7 @@ export async function GET(
         title: true,
         body: true,
         view_count: true,
+        share_count: true,
         created_at: true,
         updated_at: true,
         content_edited_at: true,
@@ -64,7 +65,7 @@ export async function GET(
         },
       },
     });
-    if (!post) return apiError("Publicación no encontrada", 404);
+    if (!post) return apiError("Publicaci?n no encontrada", 404);
 
     return apiSuccess({
       post: {
@@ -72,6 +73,7 @@ export async function GET(
         title: post.title,
         body: post.body ?? null,
         view_count: post.view_count,
+        share_count: post.share_count,
         created_at: post.created_at.toISOString(),
         updated_at: post.updated_at.toISOString(),
         was_edited: post.content_edited_at != null,
@@ -88,7 +90,7 @@ export async function GET(
       },
     });
   } catch {
-    return apiError("Error al cargar la publicación", 500);
+    return apiError("Error al cargar la publicaci?n", 500);
   }
 }
 
@@ -104,7 +106,7 @@ export async function PATCH(
     const { postId } = await context.params;
     const pid = postIdParamSchema.safeParse(postId);
     if (!pid.success) {
-      return apiError("Post inválido", 400);
+      return apiError("Post inv?lido", 400);
     }
 
     const existingPost = await prisma.post.findUnique({
@@ -118,7 +120,7 @@ export async function PATCH(
       },
     });
     if (!existingPost) {
-      return apiError("Publicación no encontrada", 404);
+      return apiError("Publicaci?n no encontrada", 404);
     }
     if (existingPost.author_id !== userId) {
       return apiError("Prohibido", 403);
@@ -128,7 +130,7 @@ export async function PATCH(
     try {
       formData = await req.formData();
     } catch {
-      return apiError("Cuerpo multipart inválido", 400);
+      return apiError("Cuerpo multipart inv?lido", 400);
     }
 
     const titleRaw = formData.get("title");
@@ -143,7 +145,7 @@ export async function PATCH(
       body: bodyForSchema,
     });
     if (!fieldsParsed.success) {
-      return apiError("Título o cuerpo inválido", 400);
+      return apiError("T?tulo o cuerpo inv?lido", 400);
     }
 
     const title = fieldsParsed.data.title;
@@ -160,11 +162,11 @@ export async function PATCH(
         const parsedJson: unknown = JSON.parse(removedRaw);
         const arr = removedIdsSchema.safeParse(parsedJson);
         if (!arr.success) {
-          return apiError("removedAttachmentIds inválido", 400);
+          return apiError("removedAttachmentIds inv?lido", 400);
         }
         removedAttachmentIds = arr.data;
       } catch {
-        return apiError("removedAttachmentIds inválido", 400);
+        return apiError("removedAttachmentIds inv?lido", 400);
       }
     }
 
@@ -217,7 +219,7 @@ export async function PATCH(
         },
       });
       if (removable.length !== uniqueRemovedIds.length) {
-        return apiError("Adjunto que no pertenece a esta publicación", 400);
+        return apiError("Adjunto que no pertenece a esta publicaci?n", 400);
       }
 
       for (const a of removable) {
@@ -243,7 +245,7 @@ export async function PATCH(
     });
 
     if (remaining + newFiles.length > POST_MAX_ATTACHMENTS) {
-      return apiError(`Máximo ${POST_MAX_ATTACHMENTS} archivos`, 400);
+      return apiError(`M?ximo ${POST_MAX_ATTACHMENTS} archivos`, 400);
     }
 
     if (newFiles.length > 0) {
@@ -272,7 +274,7 @@ export async function PATCH(
         if (e instanceof PostUploadError) {
           if (e.code === "TOO_LARGE") {
             return apiError(
-              `Archivo demasiado grande (máx. ${postUploadMaxSizeLabelEs()})`,
+              `Archivo demasiado grande (m?x. ${postUploadMaxSizeLabelEs()})`,
               400
             );
           }
@@ -304,7 +306,7 @@ export async function PATCH(
       was_edited: row.content_edited_at != null,
     });
   } catch {
-    return apiError("Error al actualizar la publicación", 500);
+    return apiError("Error al actualizar la publicaci?n", 500);
   }
 }
 
@@ -320,7 +322,7 @@ export async function DELETE(
     const { postId } = await context.params;
     const pid = postIdParamSchema.safeParse(postId);
     if (!pid.success) {
-      return apiError("Post inválido", 400);
+      return apiError("Post inv?lido", 400);
     }
 
     const existingPost = await prisma.post.findUnique({
@@ -328,7 +330,7 @@ export async function DELETE(
       select: { author_id: true },
     });
     if (!existingPost) {
-      return apiError("Publicación no encontrada", 404);
+      return apiError("Publicaci?n no encontrada", 404);
     }
     if (existingPost.author_id !== userId) {
       return apiError("Prohibido", 403);
@@ -352,6 +354,6 @@ export async function DELETE(
       post_id: pid.data,
     });
   } catch {
-    return apiError("Error al eliminar la publicación", 500);
+    return apiError("Error al eliminar la publicaci?n", 500);
   }
 }

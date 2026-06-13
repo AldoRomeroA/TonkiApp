@@ -471,7 +471,11 @@ export function PostFeed() {
                   </ul>
                 )}
                 <div className="mt-3 flex max-w-md flex-wrap items-center justify-between gap-3 border-t border-tonki-border/60 pt-3">
-                  <PostShareButton postId={post.post_id} title={post.title} />
+                  <PostShareButton
+                    postId={post.post_id}
+                    title={post.title}
+                    initialShareCount={post.share_count ?? 0}
+                  />
                   <PostViewCount
                     key={`${post.post_id}:${post.view_count ?? 0}`}
                     postId={post.post_id}
