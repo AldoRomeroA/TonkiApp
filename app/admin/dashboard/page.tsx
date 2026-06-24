@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -115,9 +116,12 @@ export default function AdminDashboardPage() {
           <div className="mx-auto grid w-full max-w-[600px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 sm:px-5">
             <Link
               href="/dashboard"
-              className="justify-self-start text-sm font-semibold text-tonki-text-secondary transition-colors hover:text-tonki-text sm:text-base"
+              className="flex shrink-0 items-center gap-2.5 justify-self-start text-tonki-text transition-colors hover:text-tonki-accent"
             >
-              Feed
+              <Image src="/logo.png" alt="Tonki" width={28} height={28} priority />
+              <span className="hidden text-base font-bold tracking-tight sm:inline">
+                Tonki
+              </span>
             </Link>
             <h1 className="max-w-[min(260px,calc(100vw-9rem))] justify-self-center text-center text-[15px] font-bold leading-snug sm:max-w-xs sm:text-[17px]">
               Centro admin
