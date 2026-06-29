@@ -34,11 +34,71 @@ model User {
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
 
-  credentials     Credential[]
-  establishments  Establishment[]
-  rewards         Reward[]
-  airdrop_configs AirdropConfig[]
-  posts           Post[]
+  credentials         Credential[]
+  auth_identities     AuthIdentity[]
+  smart_wallets       SmartWallet[]
+  passkey_credentials PasskeyCredential[]
+  establishments      Establishment[]
+  rewards             Reward[]
+  airdrop_configs     AirdropConfig[]
+  posts               Post[]
+}
+
+model AuthIdentity {
+  identity_id      String   @id @default(uuid()) @db.Char(36)
+  user_id          String   @db.Char(36)
+  provider         String   @db.VarChar(50)
+  provider_subject String   @db.VarChar(255)
+  email            String?  @db.VarChar(255)
+  email_verified   Boolean  @default(false)
+  display_name     String?  @db.VarChar(255)
+  avatar_url       String?  @db.VarChar(2048)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@unique([provider, provider_subject])
+  @@index([user_id])
+  @@index([email])
+}
+
+model SmartWallet {
+  wallet_id        String   @id @default(uuid()) @db.Char(36)
+  user_id          String   @db.Char(36)
+  network          String   @db.VarChar(50)
+  contract_address String   @db.VarChar(100)
+  status           String   @default("pending") @db.VarChar(50)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user                User                @relation(fields: [user_id], references: [user_id])
+  passkey_credentials PasskeyCredential[]
+
+  @@unique([network, contract_address])
+  @@unique([user_id, network])
+  @@index([user_id])
+}
+
+model PasskeyCredential {
+  passkey_credential_id String    @id @default(uuid()) @db.Char(36)
+  user_id               String    @db.Char(36)
+  wallet_id             String?   @db.Char(36)
+  credential_id         String    @unique @db.VarChar(512)
+  public_key            String    @db.Text
+  public_key_algorithm  Int?
+  sign_count            BigInt    @default(0)
+  transports            Json?
+  device_label          String?   @db.VarChar(100)
+  last_used_at          DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  user   User         @relation(fields: [user_id], references: [user_id])
+  wallet SmartWallet? @relation(fields: [wallet_id], references: [wallet_id])
+
+  @@index([user_id])
+  @@index([wallet_id])
 }
 
 model Post {
