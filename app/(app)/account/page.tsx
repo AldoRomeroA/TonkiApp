@@ -75,7 +75,7 @@ export default function AccountPage() {
         Gestiona sesión y accesos rápidos.
       </p>
 
-      <section className="mt-8 space-y-6 rounded-2xl border border-tonki-border bg-tonki-surface/60 p-6 sm:p-8">
+      <section className="mt-8 space-y-6 rounded-2xl border border-tonki-border bg-tonki-surface p-6 shadow-sm sm:p-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-tonki-text-faint">
               Cuenta
@@ -113,7 +113,7 @@ export default function AccountPage() {
             type="button"
             disabled={logoutBusy}
             onClick={() => void handleLogout()}
-            className="w-full rounded-xl border border-red-900/60 bg-transparent px-4 py-3 text-base font-semibold text-tonki-danger transition-colors hover:bg-red-950/40 disabled:opacity-60"
+            className="w-full rounded-xl border border-red-200 bg-transparent px-4 py-3 text-base font-semibold text-tonki-danger transition-colors hover:bg-red-50 disabled:opacity-60"
           >
             {logoutBusy ? "Cerrando…" : "Cerrar sesión"}
           </button>

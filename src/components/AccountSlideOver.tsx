@@ -166,7 +166,7 @@ export function AccountSlideOverGroup({ children }: AccountSlideOverGroupProps) 
               role="dialog"
               aria-modal="true"
               aria-labelledby={titleId}
-              className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-tonki-border bg-tonki-canvas shadow-2xl"
+              className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-tonki-border bg-tonki-surface shadow-2xl"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -204,7 +204,7 @@ export function AccountSlideOverGroup({ children }: AccountSlideOverGroupProps) 
                     </Link>
                   </p>
                 ) : (
-                  <section className="space-y-6 rounded-2xl border border-tonki-border bg-tonki-surface/60 p-5 sm:p-6">
+                  <section className="space-y-6 rounded-2xl border border-tonki-border bg-tonki-canvas p-5 sm:p-6">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-tonki-text-faint">
                         Cuenta
@@ -244,7 +244,7 @@ export function AccountSlideOverGroup({ children }: AccountSlideOverGroupProps) 
                       type="button"
                       disabled={logoutBusy}
                       onClick={() => void handleLogout()}
-                      className="w-full rounded-xl border border-red-900/60 bg-transparent px-4 py-3 text-base font-semibold text-tonki-danger transition-colors hover:bg-red-950/40 disabled:opacity-60"
+                      className="w-full rounded-xl border border-red-200 bg-transparent px-4 py-3 text-base font-semibold text-tonki-danger transition-colors hover:bg-red-50 disabled:opacity-60"
                     >
                       {logoutBusy ? "Cerrando…" : "Cerrar sesión"}
                     </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FallbackNextImage } from "src/components/FallbackNextImage";
 import {
   useCallback,
   useEffect,
@@ -27,7 +27,7 @@ import {
   POST_BODY_MAX_CHARS,
   POST_TITLE_MAX_CHARS,
 } from "src/lib/posts/schemas";
-import { ImageAttachmentGrid } from "../../dashboard/ImageAttachmentGrid";
+import { ImageAttachmentGrid } from "../../(app)/dashboard/ImageAttachmentGrid";
 import type { FeedPost, FeedPostAttachment } from "src/lib/posts/feedTypes";
 import { fetchPostsListPage } from "src/lib/posts/fetchPostsListClient";
 
@@ -304,16 +304,16 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-[1] flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-tonki-border bg-black shadow-xl sm:rounded-2xl">
+      <div className="relative z-[1] flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-tonki-border bg-tonki-surface shadow-xl sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-tonki-border px-4 py-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full px-3 py-1.5 text-[15px] text-neutral-300 hover:bg-neutral-900"
+            className="rounded-full px-3 py-1.5 text-[15px] text-tonki-text-secondary hover:bg-tonki-surface-hover"
           >
             Cancelar
           </button>
-          <span className="text-sm font-semibold text-neutral-400">
+          <span className="text-sm font-semibold text-tonki-text-muted">
             Editar publicación
           </span>
           <button
@@ -335,22 +335,22 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
             maxLength={POST_TITLE_MAX_CHARS}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-xl border border-tonki-border bg-black px-3 py-2 text-neutral-50 outline-none focus:border-neutral-700"
+            className="w-full rounded-xl border border-tonki-border bg-tonki-surface px-3 py-2 text-tonki-text outline-none focus:border-tonki-accent"
           />
           <textarea
             maxLength={POST_BODY_MAX_CHARS}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={5}
-            className="w-full resize-none rounded-xl border border-tonki-border bg-black px-3 py-2 text-neutral-50 outline-none focus:border-neutral-700"
+            className="w-full resize-none rounded-xl border border-tonki-border bg-tonki-surface px-3 py-2 text-tonki-text outline-none focus:border-tonki-accent"
           />
-          <p className="text-xs text-neutral-500 tabular-nums">
+          <p className="text-xs text-tonki-text-muted tabular-nums">
             Título {titleLen}/{POST_TITLE_MAX_CHARS} · Texto {bodyLen}/
             {POST_BODY_MAX_CHARS}
           </p>
 
           <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-tonki-text-muted">
               Adjuntos ({visibleExisting.length + drafts.length}/
               {POST_MAX_ATTACHMENTS})
             </p>
@@ -375,8 +375,8 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                   return (
                     <button
                       type="button"
-                      className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-neutral-700 ${
-                        off ? "bg-neutral-800/90" : "bg-black/80"
+                      className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-tonki-chrome-border ${
+                        off ? "bg-tonki-chrome-elevated/90" : "bg-tonki-media-bg/80"
                       }`}
                       onClick={(ev) => {
                         ev.preventDefault();
@@ -402,7 +402,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                 overlay={(item) => (
                   <button
                     type="button"
-                    className="absolute right-2 top-2 z-20 rounded-full bg-black/80 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-neutral-700 hover:bg-red-950/40"
+                    className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-tonki-chrome-border hover:bg-red-950/40"
                     onClick={(ev) => {
                       ev.preventDefault();
                       ev.stopPropagation();
@@ -427,12 +427,12 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                       key={a.attachment_id}
                       className={`relative overflow-hidden rounded-xl border text-[11px] ${
                         off
-                          ? "border-neutral-900 opacity-45"
+                          ? "border-tonki-border-strong opacity-45"
                           : "border-tonki-border"
                       }`}
                     >
                       <video
-                        className="max-h-40 w-full object-contain bg-black"
+                        className="max-h-40 w-full object-contain bg-tonki-media-bg"
                         controls
                         muted
                         playsInline
@@ -444,13 +444,13 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                             : "Vídeo adjunto"
                         }
                       />
-                      <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-neutral-400">
+                      <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-tonki-text-muted">
                         <span className="truncate font-medium">
                           {a.original_name?.trim() || "Vídeo"}
                         </span>
                         <button
                           type="button"
-                          className="shrink-0 rounded-full px-2 py-0.5 ring-1 ring-neutral-600"
+                          className="shrink-0 rounded-full px-2 py-0.5 ring-1 ring-tonki-border-strong"
                           onClick={() => toggleExisting(a.attachment_id)}
                         >
                           {off ? "+" : "−"}
@@ -462,7 +462,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                 {draftVideos.map((d) => (
                   <li
                     key={d.id}
-                    className="relative overflow-hidden rounded-xl border border-tonki-border bg-black"
+                    className="relative overflow-hidden rounded-xl border border-tonki-border bg-tonki-media-bg"
                   >
                     {d.previewUrl ? (
                       <video
@@ -481,7 +481,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                     ) : null}
                     <button
                       type="button"
-                      className="absolute right-2 top-2 z-20 rounded-full bg-black/80 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-neutral-700"
+                      className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-tonki-chrome-border"
                       onClick={() => removeDraft(d.id)}
                     >
                       ×
@@ -495,8 +495,8 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                       key={a.attachment_id}
                       className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px] ${
                         off
-                          ? "border-neutral-900 text-neutral-500 opacity-45"
-                          : "border-tonki-border text-neutral-300"
+                          ? "border-tonki-border-strong text-tonki-text-muted opacity-45"
+                          : "border-tonki-border text-tonki-text-secondary"
                       }`}
                     >
                       <span className="truncate font-medium">
@@ -504,7 +504,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                       </span>
                       <button
                         type="button"
-                        className="shrink-0 rounded-full px-2 py-0.5 ring-1 ring-neutral-600"
+                        className="shrink-0 rounded-full px-2 py-0.5 ring-1 ring-tonki-border-strong"
                         onClick={() => toggleExisting(a.attachment_id)}
                       >
                         {off ? "+" : "−"}
@@ -517,12 +517,12 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                   return (
                     <li
                       key={d.id}
-                      className="flex items-center justify-between gap-2 rounded-xl border border-tonki-border px-3 py-2 text-[11px] text-neutral-300"
+                      className="flex items-center justify-between gap-2 rounded-xl border border-tonki-border px-3 py-2 text-[11px] text-tonki-text-secondary"
                     >
                       <span className="truncate font-medium">{label}</span>
                       <button
                         type="button"
-                        className="shrink-0 rounded-full px-2 py-0.5 ring-1 ring-neutral-600"
+                        className="shrink-0 rounded-full px-2 py-0.5 ring-1 ring-tonki-border-strong"
                         onClick={() => removeDraft(d.id)}
                       >
                         ×
@@ -534,7 +534,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-tonki-border px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-neutral-950">
+              <label className="inline-flex w-fit cursor-pointer items-center rounded-full border border-tonki-border px-4 py-2 text-sm font-medium text-tonki-text-secondary hover:bg-tonki-surface-hover">
                 Añadir archivos
                 <input
                   type="file"
@@ -552,7 +552,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                   }}
                 />
               </label>
-              <p className="text-[11px] text-neutral-600">
+              <p className="text-[11px] text-tonki-text-muted">
                 Máximo {postUploadMaxSizeLabelEs()} por archivo.
               </p>
             </div>
@@ -683,7 +683,7 @@ export function AdminMyPostsTab() {
       )}
 
       {error && posts.length > 0 && (
-        <p className="border-b border-red-900/40 bg-red-950/20 px-4 py-2 text-center text-sm text-red-400">
+        <p className="border-b border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-tonki-danger">
           {error}
         </p>
       )}
@@ -700,10 +700,10 @@ export function AdminMyPostsTab() {
           return (
             <li
               key={p.post_id}
-              className="flex gap-3 px-4 py-4 transition hover:bg-neutral-950/60"
+              className="flex gap-3 px-4 py-4 transition hover:bg-tonki-surface-hover/80"
             >
-              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-tonki-border bg-neutral-900">
-                <Image
+              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-tonki-border bg-tonki-surface">
+                <FallbackNextImage
                   src="/logo.png"
                   alt=""
                   width={44}
@@ -713,9 +713,9 @@ export function AdminMyPostsTab() {
               </div>
               <div className="min-w-0 flex-1 flex flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-2 gap-y-1 text-[15px]">
-                  <span className="font-semibold text-neutral-50">Tú</span>
+                  <span className="font-semibold text-tonki-text">Tú</span>
                   <time
-                    className="text-xs text-neutral-500"
+                    className="text-xs text-tonki-text-muted"
                     dateTime={p.updated_at}
                     title={
                       p.was_edited
@@ -730,15 +730,15 @@ export function AdminMyPostsTab() {
                       Editado
                     </span>
                   ) : null}
-                  <span className="ml-auto hidden text-xs text-neutral-600 sm:inline">
+                  <span className="ml-auto hidden text-xs text-tonki-text-muted sm:inline">
                     {p.view_count} vistas · {p.share_count} compartidos
                   </span>
                 </div>
-                <p className="break-words text-[15px] font-semibold text-neutral-100">
+                <p className="break-words text-[15px] font-semibold text-tonki-text">
                   {p.title}
                 </p>
                 {p.body?.trim() && (
-                  <p className="whitespace-pre-wrap break-words text-[15px] text-neutral-300">
+                  <p className="whitespace-pre-wrap break-words text-[15px] text-tonki-text-secondary">
                     {p.body}
                   </p>
                 )}
@@ -758,7 +758,7 @@ export function AdminMyPostsTab() {
                     {vids.map((v) => (
                       <li
                         key={v.attachment_id}
-                        className="overflow-hidden rounded-xl border border-tonki-border bg-black"
+                        className="overflow-hidden rounded-xl border border-tonki-border bg-tonki-media-bg"
                       >
                         <video
                           className="max-h-48 w-full object-contain"
@@ -777,13 +777,13 @@ export function AdminMyPostsTab() {
                   </ul>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-neutral-500 sm:hidden">
+                  <span className="text-xs text-tonki-text-muted sm:hidden">
                     {p.view_count} vistas · {p.share_count} compartidos
                   </span>
                   <button
                     type="button"
                     onClick={() => setEditing(p)}
-                    className="rounded-full border border-tonki-border px-3 py-1 text-xs font-semibold text-neutral-200 hover:bg-neutral-950"
+                    className="rounded-full border border-tonki-border px-3 py-1 text-xs font-semibold text-tonki-text-secondary hover:bg-tonki-surface-hover"
                   >
                     Editar
                   </button>
@@ -791,7 +791,7 @@ export function AdminMyPostsTab() {
                     type="button"
                     disabled={deletingId === p.post_id}
                     onClick={() => void deletePost(p.post_id)}
-                    className="rounded-full border border-red-900/60 px-3 py-1 text-xs font-semibold text-red-300 hover:bg-red-950/30 disabled:opacity-50"
+                    className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-tonki-danger hover:bg-red-50 disabled:opacity-50"
                   >
                     {deletingId === p.post_id ? "Eliminando…" : "Eliminar"}
                   </button>
@@ -803,7 +803,7 @@ export function AdminMyPostsTab() {
       </ul>
 
       {!loading && posts.length === 0 && !error && (
-        <p className="py-14 text-center text-sm text-neutral-500">
+        <p className="py-14 text-center text-sm text-tonki-text-muted">
           Aún no has publicado nada.
         </p>
       )}
@@ -814,7 +814,7 @@ export function AdminMyPostsTab() {
             type="button"
             onClick={loadMore}
             disabled={loading}
-            className="rounded-full border border-tonki-border px-5 py-2 text-sm font-semibold text-neutral-300 hover:bg-neutral-950 disabled:opacity-50"
+            className="rounded-full border border-tonki-border px-5 py-2 text-sm font-semibold text-tonki-text-secondary hover:bg-tonki-surface-hover disabled:opacity-50"
           >
             {loading ? "Cargando…" : "Cargar más"}
           </button>

@@ -72,7 +72,7 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
             <motion.article
               role="dialog"
               aria-modal="true"
-              className="pointer-events-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-tonki-border bg-tonki-canvas shadow-2xl"
+              className="pointer-events-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-tonki-border bg-tonki-surface shadow-2xl"
               initial={{ y: 28, opacity: 0, scale: 0.985 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 18, opacity: 0, scale: 0.99 }}
@@ -127,7 +127,7 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
                     {videoAttachments.map((v) => (
                       <li
                         key={v.attachment_id}
-                        className="overflow-hidden rounded-2xl border border-tonki-border bg-black"
+                        className="overflow-hidden rounded-2xl border border-tonki-border bg-tonki-media-bg"
                       >
                         <video
                           className="max-h-[min(70vh,520px)] w-full object-contain"

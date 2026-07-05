@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FallbackNextImage } from "src/components/FallbackNextImage";
 import Link from "next/link";
 import {
   IconInstagram,
@@ -20,7 +20,7 @@ export default function DetailsPage() {
         </header>
 
         <div className="mb-12 overflow-hidden rounded-2xl border border-tonki-border sm:mb-16">
-          <Image
+          <FallbackNextImage
             src="/tonki-details.png"
             alt="Infografia de propuesta de valor Tonki"
             width={768}
@@ -81,7 +81,7 @@ export default function DetailsPage() {
           </article>
         </section>
 
-        <section className="mt-12 rounded-2xl border border-tonki-border bg-tonki-surface/60 p-8 text-center sm:mt-16 sm:p-10">
+        <section className="mt-12 rounded-2xl border border-tonki-border bg-tonki-surface p-8 text-center shadow-sm sm:mt-16 sm:p-10">
           <h2 className="text-2xl font-semibold tracking-tight text-tonki-accent md:text-3xl">
             Contacto y redes
           </h2>

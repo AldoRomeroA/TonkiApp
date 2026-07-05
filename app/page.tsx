@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FallbackNextImage } from "src/components/FallbackNextImage";
 import Link from "next/link";
 import {
   IconInstagram,
@@ -11,7 +11,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-tonki-canvas text-tonki-text">
       <header className="flex w-full items-center justify-between px-6 py-6 sm:px-8">
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Tonki Logo" width={56} height={56} />
+          <FallbackNextImage src="/logo.png" alt="Tonki Logo" width={56} height={56} />
           <span className="text-xl font-bold tracking-tight sm:text-2xl">
             Tonki
           </span>

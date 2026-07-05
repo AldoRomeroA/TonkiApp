@@ -26,7 +26,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-tonki-border bg-tonki-elevated/40 px-4 py-3">
+    <div className="rounded-xl border border-tonki-border border-l-4 border-l-tonki-accent bg-tonki-surface px-4 py-3 shadow-sm">
       <p className="text-xs font-medium uppercase tracking-wide text-tonki-text-muted">
         {label}
       </p>
@@ -146,7 +146,7 @@ export function AdminMetricsTab() {
   if (error && !metrics) {
     return (
       <div className="border-x border-tonki-border px-4 py-14 text-center">
-        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-sm text-tonki-danger">{error}</p>
         <button
           type="button"
           onClick={() => void load()}
@@ -183,7 +183,7 @@ export function AdminMetricsTab() {
       </div>
 
       {error ? (
-        <p className="border-b border-red-900/40 bg-red-950/20 px-4 py-2 text-center text-sm text-red-400">
+        <p className="border-b border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-tonki-danger">
           {error}
         </p>
       ) : null}
@@ -208,7 +208,7 @@ export function AdminMetricsTab() {
         />
       </div>
 
-      <div className="mx-4 mb-4 rounded-xl border border-tonki-border bg-tonki-elevated/30 px-4 py-3">
+      <div className="mx-4 mb-4 rounded-xl border border-tonki-border border-l-4 border-l-tonki-accent bg-tonki-surface px-4 py-3 shadow-sm">
         <p className="text-xs font-medium uppercase tracking-wide text-tonki-text-muted">
           Tasa de compartidos
         </p>

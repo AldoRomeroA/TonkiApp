@@ -1,6 +1,6 @@
 "use client";
 
-import { PostComposerForm } from "../../dashboard/PostComposerForm";
+import { PostComposerForm } from "../../(app)/dashboard/PostComposerForm";
 
 export function AdminComposerTab() {
   return (

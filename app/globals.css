@@ -1,22 +1,40 @@
 @import "tailwindcss";
 
-/* Tonki — paleta y tokens (espaciado vía utilidades Tailwind: 4, 8, 12, 16…) */
+/* Tonki — paleta clara (contenido) + chrome oscuro (barras de navegación) */
 :root {
-  --tonki-canvas: #09090b;
-  --tonki-surface: #121214;
-  --tonki-elevated: #18181b;
-  --tonki-surface-hover: #141416;
-  --tonki-border: #27272a;
-  --tonki-border-strong: #3f3f46;
-  --tonki-text: #fafafa;
-  --tonki-text-secondary: #e4e4e7;
-  --tonki-text-muted: #a1a1aa;
-  --tonki-text-faint: #71717a;
+  /* Área de contenido: gris claro → blanco */
+  --tonki-canvas: #f4f4f5;
+  --tonki-surface: #ffffff;
+  --tonki-elevated: #ffffff;
+  --tonki-surface-hover: #ececee;
+  --tonki-border: #e4e4e7;
+  --tonki-border-strong: #d4d4d8;
+  --tonki-text: #18181b;
+  --tonki-text-secondary: #3f3f46;
+  --tonki-text-muted: #71717a;
+  --tonki-text-faint: #a1a1aa;
+
+  /* Acento amarillo — sin cambios */
   --tonki-accent: #f6c941;
-  --tonki-accent-hover: #f5d675;
+  --tonki-accent-hover: #e8bc2e;
   --tonki-accent-fg: #0a0a0b;
-  --tonki-danger: #f87171;
+
+  /* Chrome: barras superior e inferior (gris oscuro actual) */
+  --tonki-chrome: #121214;
+  --tonki-chrome-elevated: #18181b;
+  --tonki-chrome-hover: #1f1f23;
+  --tonki-chrome-border: #27272a;
+  --tonki-chrome-text: #fafafa;
+  --tonki-chrome-text-secondary: #e4e4e7;
+  --tonki-chrome-text-muted: #a1a1aa;
+
+  /* Overlays y contenedores de media */
+  --tonki-overlay: rgba(0, 0, 0, 0.55);
+  --tonki-media-bg: #09090b;
+
+  --tonki-danger: #dc2626;
   --tonki-danger-muted: #fecaca;
+
   --background: var(--tonki-canvas);
   --foreground: var(--tonki-text);
 }
@@ -40,6 +58,14 @@
   --color-tonki-accent: var(--tonki-accent);
   --color-tonki-accent-hover: var(--tonki-accent-hover);
   --color-tonki-accent-fg: var(--tonki-accent-fg);
+  --color-tonki-chrome: var(--tonki-chrome);
+  --color-tonki-chrome-elevated: var(--tonki-chrome-elevated);
+  --color-tonki-chrome-hover: var(--tonki-chrome-hover);
+  --color-tonki-chrome-border: var(--tonki-chrome-border);
+  --color-tonki-chrome-text: var(--tonki-chrome-text);
+  --color-tonki-chrome-text-secondary: var(--tonki-chrome-text-secondary);
+  --color-tonki-chrome-text-muted: var(--tonki-chrome-text-muted);
+  --color-tonki-media-bg: var(--tonki-media-bg);
   --color-tonki-danger: var(--tonki-danger);
 }
 

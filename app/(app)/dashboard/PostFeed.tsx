@@ -29,6 +29,8 @@ import {
   type FeedPostItem,
 } from "src/lib/posts/proceduralFeed";
 
+import { FallbackImage } from "src/components/FallbackImage";
+
 import { ImageAttachmentGrid } from "./ImageAttachmentGrid";
 import { FeedComposer } from "./FeedComposer";
 import { PostOverlayModal } from "./PostOverlayModal";
@@ -347,7 +349,7 @@ export function PostFeed() {
 
   return (
     <div className="flex flex-col border-x border-tonki-border">
-      <div className="border-b border-tonki-border bg-tonki-canvas px-4 py-3 sm:px-5">
+      <div className="border-b border-tonki-border bg-tonki-surface px-4 py-3 sm:px-5">
         <h2 className="text-xl font-bold tracking-tight text-tonki-text">Inicio</h2>
       </div>
       <FeedComposer
@@ -383,8 +385,7 @@ export function PostFeed() {
           >
             <div className="flex gap-4">
               <div className="mt-1 h-11 w-11 shrink-0 overflow-hidden rounded-full border border-tonki-border bg-tonki-canvas">
-                {/* eslint-disable-next-line @next/next/no-img-element -- small avatar from static asset */}
-                <img
+                <FallbackImage
                   src="/logo.png"
                   alt=""
                   className="h-full w-full object-cover opacity-90"
@@ -437,7 +438,7 @@ export function PostFeed() {
                 {vids.length > 0 && (
                   <ul className="mt-4 flex max-w-xl flex-col gap-3">
                     {vids.map((v) => (
-                      <li key={v.attachment_id} className="overflow-hidden rounded-2xl border border-tonki-border bg-black">
+                      <li key={v.attachment_id} className="overflow-hidden rounded-2xl border border-tonki-border bg-tonki-media-bg">
                         <video
                           className="max-h-[min(70vh,480px)] w-full object-contain"
                           controls

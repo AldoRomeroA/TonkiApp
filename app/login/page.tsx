@@ -194,14 +194,14 @@ const LoginForm = memo(function LoginForm({
         placeholder="Usuario o correo"
         value={username}
         onChange={(e) => onUsernameChange(e.target.value)}
-        className="rounded-xl border border-tonki-border bg-tonki-canvas px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
+        className="rounded-xl border border-tonki-border bg-tonki-surface px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
       />
       <input
         type="password"
         placeholder="Contraseña"
         value={password}
         onChange={(e) => onPasswordChange(e.target.value)}
-        className="rounded-xl border border-tonki-border bg-tonki-canvas px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
+        className="rounded-xl border border-tonki-border bg-tonki-surface px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
       />
       <button
         type="submit"
@@ -415,7 +415,7 @@ function LoginPageInner() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-tonki-canvas px-4">
-      <div className="mx-auto flex w-full max-w-sm flex-col gap-8 rounded-2xl border border-tonki-border bg-tonki-surface p-8 shadow-2xl shadow-black/40">
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-8 rounded-2xl border border-tonki-border bg-tonki-surface p-8 shadow-xl shadow-black/10">
         {/* Logo / Título */}
         <div className="mb-0 flex flex-col items-center gap-2">
           <span className="text-3xl font-bold tracking-tight text-tonki-accent sm:text-4xl">

@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { FallbackImage } from "src/components/FallbackImage";
+
 export type ImageAttachmentGridItem = {
   key: string;
   src: string;
@@ -100,11 +102,10 @@ export function ImageAttachmentGrid({
             <button
               type="button"
               aria-label={`Ampliar imagen ${index + 1}${item.alt ? `: ${item.alt}` : ""}`}
-              className="group/thumb relative block aspect-square w-full overflow-hidden rounded-2xl border border-tonki-border bg-tonki-canvas outline-none ring-offset-2 ring-offset-tonki-canvas focus-visible:ring-2 focus-visible:ring-tonki-accent"
+              className="group/thumb relative block aspect-square w-full overflow-hidden rounded-2xl border border-tonki-border bg-tonki-surface outline-none ring-offset-2 ring-offset-tonki-canvas focus-visible:ring-2 focus-visible:ring-tonki-accent"
               onClick={() => setOpenIdx(index)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- blobs y URLs relativas */}
-              <img
+              <FallbackImage
                 src={item.src}
                 alt={item.alt ?? ""}
                 className="pointer-events-none h-full w-full object-cover transition group-hover/thumb:opacity-95"
@@ -119,7 +120,7 @@ export function ImageAttachmentGrid({
 
       {openIdx !== null && items[openIdx] !== undefined ? (
         <div
-          className="fixed inset-0 z-[200] flex flex-col bg-tonki-canvas/95 p-4 sm:p-6"
+          className="fixed inset-0 z-[200] flex flex-col bg-tonki-surface/98 p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-label="Imagen completa"
@@ -157,8 +158,7 @@ export function ImageAttachmentGrid({
               </button>
             ) : null}
 
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FallbackImage
               src={items[openIdx].src}
               alt={items[openIdx].alt ?? "Publicación"}
               className="max-h-[min(92dvh,calc(100vh-140px))] max-w-[min(100%,96vw)] object-contain"

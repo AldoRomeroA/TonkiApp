@@ -171,17 +171,39 @@ model Reward {
 }
 
 model AirdropConfig {
-  config_id          String   @id @default(uuid()) @db.Char(36)
-  user_id            String   @db.Char(36)
-  amount             Float
-  scheduled_date     DateTime
-  periodicity_months Int
-  max_users          Int
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
+  config_id           String    @id @default(uuid()) @db.Char(36)
+  user_id             String    @db.Char(36)
+  amount              Float
+  scheduled_date      DateTime
+  scheduled_end_date  DateTime?
+  periodicity_months  Int
+  max_users           Int
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
 
-  user User         @relation(fields: [user_id], references: [user_id])
-  logs AirdropLog[]
+  user     User                    @relation(fields: [user_id], references: [user_id])
+  logs     AirdropLog[]
+  archives AirdropCampaignArchive[]
+}
+
+model AirdropCampaignArchive {
+  archive_id       String   @id @default(uuid()) @db.Char(36)
+  config_id        String   @db.Char(36)
+  admin_id         String   @db.Char(36)
+  establishment_id String?  @db.Char(36)
+  campaign_start   DateTime
+  campaign_end     DateTime
+  balance_sent     Float    @default(0)
+  users_sent       Int      @default(0)
+  visitors_count   Int      @default(0)
+  purchase_count   Int      @default(0)
+  total_spent      Float    @default(0)
+  archived_at      DateTime @default(now())
+
+  config AirdropConfig @relation(fields: [config_id], references: [config_id], onDelete: Cascade)
+
+  @@unique([config_id])
+  @@index([admin_id, campaign_end(sort: Desc)])
 }
 
 model AirdropLog {

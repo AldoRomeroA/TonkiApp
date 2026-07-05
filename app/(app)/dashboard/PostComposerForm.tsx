@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FallbackNextImage } from "src/components/FallbackNextImage";
 import {
   useCallback,
   useMemo,
@@ -225,8 +225,8 @@ export function PostComposerForm({
       onSubmit={handleSubmit}
     >
       <div className="flex gap-3">
-        <div className="mt-2 h-10 w-10 shrink-0 overflow-hidden rounded-full border border-tonki-border bg-neutral-900">
-          <Image
+        <div className="mt-2 h-10 w-10 shrink-0 overflow-hidden rounded-full border border-tonki-border bg-tonki-surface">
+          <FallbackNextImage
             src="/logo.png"
             alt=""
             width={40}
@@ -244,7 +244,7 @@ export function PostComposerForm({
               setFeedback(null);
               setTitle(e.target.value);
             }}
-            className="w-full border-0 border-b border-transparent bg-transparent pb-3 text-xl font-semibold text-neutral-50 placeholder-neutral-600 outline-none transition focus:border-tonki-border"
+            className="w-full border-0 border-b border-transparent bg-transparent pb-3 text-xl font-semibold text-tonki-text placeholder:text-tonki-text-faint outline-none transition focus:border-tonki-border"
             placeholder="Título · que sepan de qué va"
           />
           <textarea
@@ -256,10 +256,10 @@ export function PostComposerForm({
             }}
             rows={4}
             maxLength={POST_BODY_MAX_CHARS}
-            className="min-h-[100px] w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-neutral-200 placeholder-neutral-600 outline-none"
+            className="min-h-[100px] w-full resize-none border-0 bg-transparent text-[15px] leading-relaxed text-tonki-text-secondary placeholder:text-tonki-text-faint outline-none"
             placeholder="¿Qué está pasando?"
           />
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-neutral-600">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-tonki-text-muted">
             <span>
               Cupos libres {attachmentsLeft}/{POST_MAX_ATTACHMENTS} · máx.{" "}
               {postUploadMaxSizeLabelEs()} por archivo
@@ -273,7 +273,7 @@ export function PostComposerForm({
               >
                 {titleLen}/{POST_TITLE_MAX_CHARS}
               </span>
-              <span className="mx-2 text-neutral-700">·</span>
+              <span className="mx-2 text-tonki-text-faint">·</span>
               Texto{" "}
               <span
                 className={
@@ -294,7 +294,7 @@ export function PostComposerForm({
             <button
               type="button"
               aria-label={`Quitar ${item.alt ?? "adjunto"}`}
-              className="absolute right-2 top-2 z-20 rounded-full bg-black/70 px-2 py-0.5 text-xs font-semibold text-white ring-1 ring-neutral-700 hover:bg-red-950/90"
+              className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/70 px-2 py-0.5 text-xs font-semibold text-white ring-1 ring-tonki-chrome-border hover:bg-red-950/90"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -312,7 +312,7 @@ export function PostComposerForm({
           {videoDrafts.map((d) => (
             <li
               key={d.id}
-              className="relative overflow-hidden rounded-2xl border border-tonki-border bg-black"
+              className="relative overflow-hidden rounded-2xl border border-tonki-border bg-tonki-media-bg"
             >
               {d.previewUrl ? (
                 <video
@@ -332,7 +332,7 @@ export function PostComposerForm({
               <button
                 type="button"
                 aria-label="Quitar vídeo"
-                className="absolute right-2 top-2 z-20 rounded-full bg-black/80 px-2 py-0.5 text-xs font-semibold text-white ring-1 ring-neutral-700 hover:bg-red-950/90"
+                className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-xs font-semibold text-white ring-1 ring-tonki-chrome-border hover:bg-red-950/90"
                 onClick={() => removeDraft(d.id)}
               >
                 ×
@@ -351,12 +351,12 @@ export function PostComposerForm({
                 key={d.id}
                 className="flex items-center justify-between gap-2 rounded-xl border border-tonki-border px-3 py-2"
               >
-                <span className="truncate text-xs text-neutral-400">{label}</span>
+                <span className="truncate text-xs text-tonki-text-muted">{label}</span>
                 <button
                   type="button"
                   aria-label={`Quitar ${label}`}
                   onClick={() => removeDraft(d.id)}
-                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold text-neutral-400 ring-1 ring-neutral-600 hover:bg-red-950/40"
+                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold text-tonki-text-muted ring-1 ring-tonki-border-strong hover:bg-red-50"
                 >
                   ×
                 </button>
@@ -367,7 +367,7 @@ export function PostComposerForm({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-tonki-border pt-3">
-        <label className="cursor-pointer rounded-full px-4 py-2 text-sm font-medium text-neutral-400 transition hover:bg-neutral-900 hover:text-neutral-100">
+        <label className="cursor-pointer rounded-full px-4 py-2 text-sm font-medium text-tonki-text-muted transition hover:bg-tonki-surface-hover hover:text-tonki-text">
           Añadir
           <input
             type="file"
@@ -400,8 +400,8 @@ export function PostComposerForm({
         <p
           className={
             feedback.kind === "error"
-              ? "rounded-lg border border-red-900/50 bg-red-950/35 px-3 py-2 text-sm text-red-300"
-              : "text-sm text-emerald-400"
+              ? "rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-tonki-danger"
+              : "text-sm text-emerald-700"
           }
           role={feedback.kind === "error" ? "alert" : "status"}
           aria-live={feedback.kind === "error" ? "assertive" : "polite"}

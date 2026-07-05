@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { FallbackNextImage } from "src/components/FallbackNextImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -86,10 +86,10 @@ export default function AdminDashboardPage() {
         role="tab"
         aria-selected={tab === id}
         onClick={() => setTab(id)}
-        className={`relative flex min-h-[52px] flex-1 justify-center px-6 text-sm font-semibold transition-colors hover:bg-tonki-surface-hover/50 sm:text-base ${
+        className={`relative flex min-h-[52px] flex-1 justify-center px-6 text-sm font-semibold transition-colors hover:bg-tonki-chrome-hover/50 sm:text-base ${
           tab === id
-            ? "text-tonki-text"
-            : "text-tonki-text-muted hover:text-tonki-text-secondary"
+            ? "text-tonki-chrome-text"
+            : "text-tonki-chrome-text-muted hover:text-tonki-chrome-text-secondary"
         }`}
       >
         {label}
@@ -112,24 +112,24 @@ export default function AdminDashboardPage() {
   return (
     <AccountSlideOverGroup>
       <div className="min-h-screen bg-tonki-canvas text-tonki-text">
-        <header className="sticky top-0 z-40 border-b border-tonki-border bg-tonki-canvas/90 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-tonki-chrome-border bg-tonki-chrome/95 backdrop-blur-md">
           <div className="mx-auto grid w-full max-w-[600px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 sm:px-5">
             <Link
               href="/dashboard"
-              className="flex shrink-0 items-center gap-2.5 justify-self-start text-tonki-text transition-colors hover:text-tonki-accent"
+              className="flex shrink-0 items-center gap-2.5 justify-self-start text-tonki-chrome-text transition-colors hover:text-tonki-accent"
             >
-              <Image src="/logo.png" alt="Tonki" width={28} height={28} priority />
+              <FallbackNextImage src="/logo.png" alt="Tonki" width={28} height={28} priority />
               <span className="hidden text-base font-bold tracking-tight sm:inline">
                 Tonki
               </span>
             </Link>
-            <h1 className="max-w-[min(260px,calc(100vw-9rem))] justify-self-center text-center text-[15px] font-bold leading-snug sm:max-w-xs sm:text-[17px]">
+            <h1 className="max-w-[min(260px,calc(100vw-9rem))] justify-self-center text-center text-[15px] font-bold leading-snug text-tonki-chrome-text sm:max-w-xs sm:text-[17px]">
               Centro admin
             </h1>
-            <AccountSlideOverTrigger className="justify-self-end truncate text-sm text-tonki-text-muted transition-colors hover:text-tonki-text-secondary sm:max-w-[min(140px,calc((100vw-10rem)/2))] sm:text-base" />
+            <AccountSlideOverTrigger className="justify-self-end truncate text-sm text-tonki-chrome-text-muted transition-colors hover:text-tonki-chrome-text-secondary sm:max-w-[min(140px,calc((100vw-10rem)/2))] sm:text-base" />
           </div>
 
-          <div className="mx-auto grid w-full max-w-[600px] grid-cols-3 border-y border-transparent">
+          <div className="mx-auto grid w-full max-w-[600px] grid-cols-3 border-y border-tonki-chrome-border">
             {tabs("compose", "Nuevo post")}
             {tabs("mine", "Mis publicaciones")}
             {tabs("metrics", "Métricas")}
@@ -150,20 +150,20 @@ export default function AdminDashboardPage() {
           </div>
         </main>
 
-        <nav className="fixed bottom-4 left-4 right-4 z-30 mx-auto flex w-[min(560px,calc(100%-2rem))] justify-center gap-8 rounded-full border border-tonki-border bg-tonki-canvas/95 px-6 py-3 text-sm font-medium text-tonki-text-muted shadow-lg shadow-black/30 backdrop-blur-md md:hidden">
+        <nav className="fixed bottom-4 left-4 right-4 z-30 mx-auto flex w-[min(560px,calc(100%-2rem))] justify-center gap-8 rounded-full border border-tonki-chrome-border bg-tonki-chrome/95 px-6 py-3 text-sm font-medium text-tonki-chrome-text-muted shadow-lg shadow-black/20 backdrop-blur-md md:hidden">
           <Link
             href="/"
-            className="transition-colors hover:text-tonki-text-secondary"
+            className="transition-colors hover:text-tonki-chrome-text-secondary"
           >
             Tonki
           </Link>
           <Link
             href="/dashboard"
-            className="transition-colors hover:text-tonki-text-secondary"
+            className="transition-colors hover:text-tonki-chrome-text-secondary"
           >
             Feed
           </Link>
-          <AccountSlideOverTrigger className="max-w-[5.5rem] truncate transition-colors hover:text-tonki-text-secondary" />
+          <AccountSlideOverTrigger className="max-w-[5.5rem] truncate transition-colors hover:text-tonki-chrome-text-secondary" />
         </nav>
       </div>
     </AccountSlideOverGroup>
