@@ -19,7 +19,7 @@ type AdminHeaderProps = {
  */
 export function AdminHeader({ title, right }: AdminHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-tonki-chrome-border bg-tonki-chrome/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-tonki-chrome-border bg-tonki-chrome backdrop-blur-md">
       <div className="mx-auto flex w-full items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link
           href="/admin/dashboard"

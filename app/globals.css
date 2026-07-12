@@ -9,7 +9,7 @@
   --tonki-canvas: #fefdf5;
 
   /* Cards, paneles y contenedores flotantes */
-  --tonki-surface: #fcf1c8;
+  --tonki-surface: #fefdf5;
   --tonki-elevated: #fefdf5;
   --tonki-surface-hover: #f3e6bc;
   --tonki-border: #e8dcb8;
@@ -32,7 +32,7 @@
   --tonki-cta-fg: #fefdf5;
 
   /* Chrome: barras superior e inferior (abdomen) */
-  --tonki-chrome: #2d210d;
+  --tonki-chrome: #202020;
   --tonki-chrome-elevated: #3a2b12;
   --tonki-chrome-hover: #453318;
   --tonki-chrome-border: #52401c;
