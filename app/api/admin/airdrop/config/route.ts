@@ -4,6 +4,10 @@ import prisma from "src/lib/db";
 import { apiError, apiSuccess } from "src/lib/api/response";
 import { requireActiveAdminSession } from "src/lib/api/requireActiveAdmin";
 import {
+  normalizeAirdropAssetCode,
+  type AirdropAssetCode,
+} from "src/lib/airdrop/constants";
+import {
   airdropConfigBodySchema,
   parseAirdropScheduledDate,
   parseAirdropScheduledDateEnd,
@@ -11,6 +15,7 @@ import {
 
 function serializeConfig(config: {
   amount: number;
+  asset: string;
   scheduled_date: Date;
   scheduled_end_date: Date | null;
   periodicity_months: number;
@@ -18,12 +23,22 @@ function serializeConfig(config: {
 }) {
   return {
     amount: config.amount,
+    asset: normalizeAirdropAssetCode(config.asset) as AirdropAssetCode,
     scheduled_date: config.scheduled_date.toISOString(),
     scheduled_end_date: config.scheduled_end_date?.toISOString() ?? null,
     periodicity_months: config.periodicity_months,
     max_users: config.max_users,
   };
 }
+
+const CONFIG_SELECT = {
+  amount: true,
+  asset: true,
+  scheduled_date: true,
+  scheduled_end_date: true,
+  periodicity_months: true,
+  max_users: true,
+} as const;
 
 export async function GET() {
   try {
@@ -33,13 +48,7 @@ export async function GET() {
     const config = await prisma.airdropConfig.findFirst({
       where: { user_id: gate.userId },
       orderBy: { created_at: "desc" },
-      select: {
-        amount: true,
-        scheduled_date: true,
-        scheduled_end_date: true,
-        periodicity_months: true,
-        max_users: true,
-      },
+      select: CONFIG_SELECT,
     });
 
     return apiSuccess({
@@ -68,8 +77,14 @@ export async function POST(req: Request) {
       return apiError(msg, 400);
     }
 
-    const { amount, scheduled_date, scheduled_end_date, periodicity_months, max_users } =
-      parsed.data;
+    const {
+      amount,
+      asset,
+      scheduled_date,
+      scheduled_end_date,
+      periodicity_months,
+      max_users,
+    } = parsed.data;
     const scheduledDate = parseAirdropScheduledDate(scheduled_date);
     const scheduledEndDate = parseAirdropScheduledDateEnd(scheduled_end_date);
 
@@ -83,36 +98,26 @@ export async function POST(req: Request) {
           where: { config_id: existing.config_id },
           data: {
             amount,
+            asset,
             scheduled_date: scheduledDate,
             scheduled_end_date: scheduledEndDate,
             periodicity_months,
             max_users,
           },
-          select: {
-            amount: true,
-            scheduled_date: true,
-            scheduled_end_date: true,
-            periodicity_months: true,
-            max_users: true,
-          },
+          select: CONFIG_SELECT,
         })
       : await prisma.airdropConfig.create({
           data: {
             config_id: randomUUID(),
             user_id: gate.userId,
             amount,
+            asset,
             scheduled_date: scheduledDate,
             scheduled_end_date: scheduledEndDate,
             periodicity_months,
             max_users,
           },
-          select: {
-            amount: true,
-            scheduled_date: true,
-            scheduled_end_date: true,
-            periodicity_months: true,
-            max_users: true,
-          },
+          select: CONFIG_SELECT,
         });
 
     return apiSuccess({

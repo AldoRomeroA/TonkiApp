@@ -174,6 +174,7 @@ model AirdropConfig {
   config_id           String    @id @default(uuid()) @db.Char(36)
   user_id             String    @db.Char(36)
   amount              Float
+  asset               String    @default("TONKI") @db.VarChar(10)
   scheduled_date      DateTime
   scheduled_end_date  DateTime?
   periodicity_months  Int
@@ -215,7 +216,7 @@ model AirdropLog {
   executed_at      DateTime @default(now())
   success          Boolean  @default(true)
   error_message    String?  @db.VarChar(255)
-  response_json    String?
+  response_json    String?  @db.Text
 
   config AirdropConfig @relation(fields: [config_id], references: [config_id])
 }

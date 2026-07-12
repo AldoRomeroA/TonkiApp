@@ -6,6 +6,7 @@ export const airdropConfigBodySchema = z
       .number()
       .positive("El monto debe ser mayor que cero")
       .max(1_000_000_000, "Monto demasiado grande"),
+    asset: z.enum(["TONKI", "XLM", "USDC"]).default("TONKI"),
     scheduled_date: z
       .string()
       .trim()
@@ -36,6 +37,25 @@ export const airdropConfigBodySchema = z
   );
 
 export type AirdropConfigFormValues = z.infer<typeof airdropConfigBodySchema>;
+
+export const airdropPrepareBodySchema = z.object({
+  source_public_key: z
+    .string()
+    .trim()
+    .regex(/^G[A-Z2-7]{55}$/, "Public key Stellar inválida"),
+});
+
+export const airdropSendBodySchema = z.object({
+  signed_xdr: z.string().trim().min(1, "XDR firmado requerido").max(200_000),
+  source_public_key: z
+    .string()
+    .trim()
+    .regex(/^G[A-Z2-7]{55}$/, "Public key Stellar inválida")
+    .optional(),
+});
+
+export type AirdropPrepareBody = z.infer<typeof airdropPrepareBodySchema>;
+export type AirdropSendBody = z.infer<typeof airdropSendBodySchema>;
 
 /** Convierte `YYYY-MM-DD` del formulario a `Date` UTC estable. */
 export function parseAirdropScheduledDate(isoDate: string): Date {

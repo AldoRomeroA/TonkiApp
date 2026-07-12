@@ -23,6 +23,7 @@ function isConfigGetSuccess(
   const c = o.config as Record<string, unknown>;
   return (
     typeof c.amount === "number" &&
+    (c.asset === "TONKI" || c.asset === "XLM" || c.asset === "USDC") &&
     typeof c.scheduled_date === "string" &&
     (c.scheduled_end_date === null ||
       typeof c.scheduled_end_date === "string") &&

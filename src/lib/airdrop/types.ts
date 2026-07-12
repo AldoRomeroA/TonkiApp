@@ -8,6 +8,7 @@ export type AirdropUserRow = {
 
 export type AirdropPagePayload = {
   amount: number;
+  asset: "TONKI" | "XLM" | "USDC";
   source_public_key: string | null;
   scheduled_date: string | null;
   scheduled_end_date: string | null;
@@ -18,6 +19,7 @@ export type AirdropPagePayload = {
 
 export type AirdropConfigRecord = {
   amount: number;
+  asset: "TONKI" | "XLM" | "USDC";
   scheduled_date: string;
   scheduled_end_date: string | null;
   periodicity_months: number;
@@ -42,6 +44,49 @@ export type AirdropStatsPayload = {
 
 export type AirdropConfigPayload = {
   config: AirdropConfigRecord | null;
+};
+
+export type AirdropHistoryRecipient = {
+  user_id: string;
+  name: string;
+  wallet_address: string | null;
+  tonkis: number;
+  fund_percent: number;
+  amount: number;
+};
+
+export type AirdropHistoryConfigSnapshot = {
+  amount: number;
+  asset: "TONKI" | "XLM" | "USDC";
+  scheduled_date: string;
+  scheduled_end_date: string | null;
+  periodicity_months: number;
+  max_users: number;
+};
+
+export type AirdropHistoryFees = {
+  user_pool: number;
+  app_fee: number;
+  stellar_reserve: number;
+  app_fee_destination: string;
+};
+
+export type AirdropHistoryLogRecord = {
+  log_id: string;
+  executed_at: string;
+  success: boolean;
+  transaction_hash: string | null;
+  total_amount: number;
+  users_involved: number;
+  error_message: string | null;
+  asset: "TONKI" | "XLM" | "USDC" | null;
+  config: AirdropHistoryConfigSnapshot;
+  fees: AirdropHistoryFees | null;
+  recipients: AirdropHistoryRecipient[];
+};
+
+export type AirdropHistoryPayload = {
+  logs: AirdropHistoryLogRecord[];
 };
 
 type AirdropPageSuccessBody = AirdropPagePayload & { success: true };

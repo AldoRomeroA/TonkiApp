@@ -1,19 +1,26 @@
 import { readJsonSafely } from "src/lib/api/readJsonSafely";
+import type {
+  AirdropHistoryLogRecord,
+  AirdropHistoryPayload,
+} from "src/lib/airdrop/types";
 
-import {
-  isAirdropPageSuccess,
-  type AirdropPagePayload,
-} from "./types";
-
-export type FetchAdminAirdropResult =
-  | { ok: true; data: AirdropPagePayload }
+export type FetchAirdropHistoryResult =
+  | { ok: true; data: AirdropHistoryPayload }
   | { ok: false; error: string; unauthorized?: true };
 
-export async function fetchAdminAirdrop(opts: {
+function isHistoryPayload(data: unknown): data is AirdropHistoryPayload & {
+  success: true;
+} {
+  if (typeof data !== "object" || data === null) return false;
+  const o = data as Record<string, unknown>;
+  return o.success === true && Array.isArray(o.logs);
+}
+
+export async function fetchAirdropHistory(opts: {
   networkErrorMessage: string;
-}): Promise<FetchAdminAirdropResult> {
+}): Promise<FetchAirdropHistoryResult> {
   try {
-    const res = await fetch("/api/admin/airdrop", {
+    const res = await fetch("/api/admin/airdrop/history", {
       credentials: "include",
       cache: "no-store",
     });
@@ -32,32 +39,14 @@ export async function fetchAdminAirdrop(opts: {
       return { ok: false, error: err.error || `Error ${res.status}` };
     }
 
-    if (!isAirdropPageSuccess(body)) {
+    if (!isHistoryPayload(body)) {
       return { ok: false, error: "Formato de datos inesperado" };
     }
-
-    const {
-      amount,
-      asset,
-      source_public_key,
-      scheduled_date,
-      scheduled_end_date,
-      max_users,
-      periodicity_months,
-      users,
-    } = body;
 
     return {
       ok: true,
       data: {
-        amount,
-        asset: asset === "XLM" || asset === "USDC" || asset === "TONKI" ? asset : "TONKI",
-        source_public_key,
-        scheduled_date,
-        scheduled_end_date: scheduled_end_date ?? null,
-        max_users,
-        periodicity_months,
-        users,
+        logs: body.logs as AirdropHistoryLogRecord[],
       },
     };
   } catch {

@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import {
+  AIRDROP_ASSET_CODES,
+  AIRDROP_DEFAULT_ASSET,
+} from "src/lib/airdrop/constants";
+import {
   fetchAirdropConfig,
   saveAirdropConfig,
 } from "src/lib/airdrop/fetchAirdropConfigClient";
@@ -25,6 +29,7 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 function emptyForm(): AirdropConfigFormValues {
   return {
     amount: 0,
+    asset: AIRDROP_DEFAULT_ASSET,
     scheduled_date: "",
     scheduled_end_date: "",
     periodicity_months: 1,
@@ -35,6 +40,7 @@ function emptyForm(): AirdropConfigFormValues {
 function formFromConfig(config: AirdropConfigRecord): AirdropConfigFormValues {
   return {
     amount: config.amount,
+    asset: config.asset,
     scheduled_date: formatAirdropDateInput(config.scheduled_date),
     scheduled_end_date: formatAirdropDateInput(config.scheduled_end_date),
     periodicity_months: config.periodicity_months,
@@ -50,8 +56,13 @@ function CurrentConfigSummary({ config }: { config: AirdropConfigRecord }) {
         <li>
           Monto:{" "}
           <span className="font-semibold text-tonki-text">
-            {config.amount.toLocaleString("es", { maximumFractionDigits: 7 })} XLM
+            {config.amount.toLocaleString("es", { maximumFractionDigits: 7 })}{" "}
+            {config.asset}
           </span>
+        </li>
+        <li>
+          Token:{" "}
+          <span className="font-semibold text-tonki-text">{config.asset}</span>
         </li>
         <li>
           Fecha inicio programada:{" "}
@@ -172,7 +183,7 @@ export default function AdminAirdropConfigurePage() {
           Configuración de Airdrop
         </h1>
         <p className="mt-1 text-sm text-tonki-text-muted">
-          Define monto, fecha y límites para el reparto.
+          Define monto, token, fecha y límites para el reparto.
         </p>
       </header>
 
@@ -210,7 +221,7 @@ export default function AdminAirdropConfigurePage() {
         >
           <div>
             <label htmlFor="amount" className="mb-1.5 block text-sm font-medium text-tonki-text">
-              Monto total del airdrop (XLM)
+              Monto total del airdrop
             </label>
             <input
               id="amount"
@@ -228,6 +239,31 @@ export default function AdminAirdropConfigurePage() {
               }
               className={FIELD}
             />
+          </div>
+
+          <div>
+            <label htmlFor="asset" className="mb-1.5 block text-sm font-medium text-tonki-text">
+              Token a enviar
+            </label>
+            <select
+              id="asset"
+              name="asset"
+              required
+              value={form.asset}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  asset: e.target.value as AirdropConfigFormValues["asset"],
+                }))
+              }
+              className={FIELD}
+            >
+              {AIRDROP_ASSET_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
