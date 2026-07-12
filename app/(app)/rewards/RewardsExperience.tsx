@@ -70,7 +70,7 @@ export function RewardsExperience() {
   const greetingName = name ?? "User";
 
   return (
-    <main className="mx-auto w-full max-w-[600px] px-4 pb-8 pt-6 sm:px-6">
+    <main className="mx-auto w-full px-4 pb-8 pt-6 sm:px-6">
       <Greeting name={greetingName} />
       <BalanceCard />
       <Leaderboard />

@@ -56,7 +56,7 @@ export default function AccountPage() {
 
   if (loading || !payload) {
     return (
-      <main className="mx-auto flex w-full max-w-[600px] items-center justify-center px-4 py-16 text-sm text-tonki-text-muted">
+      <main className="mx-auto flex w-full items-center justify-center px-4 py-16 text-sm text-tonki-text-muted">
         Cargando perfil…
       </main>
     );
@@ -67,7 +67,7 @@ export default function AccountPage() {
     user.username ?? user.email ?? (user.id ? `${user.id.slice(0, 8)}…` : "—");
 
   return (
-    <main className="mx-auto w-full max-w-[600px] px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto w-full px-4 py-8 sm:px-6 sm:py-10">
       <h1 className="text-2xl font-bold tracking-tight text-tonki-text sm:text-3xl">
         Tu perfil
       </h1>

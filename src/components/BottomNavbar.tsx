@@ -73,7 +73,7 @@ export function BottomNavbar() {
       aria-label="Navegación principal"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-tonki-chrome-border bg-tonki-chrome/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl backdrop-saturate-150 [padding-bottom:env(safe-area-inset-bottom)]"
     >
-      <ul className="mx-auto flex w-full max-w-[600px] items-stretch justify-around px-1 sm:px-2">
+      <ul className="mx-auto flex w-full items-stretch justify-around px-1 sm:px-2">
         {navItems.map(({ href, label, Icon }) => {
           const isActive =
             pathname === href || pathname.startsWith(`${href}/`);

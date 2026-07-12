@@ -1,36 +1,48 @@
+@import url("https://fonts.cdnfonts.com/css/neo-sans-pro");
 @import "tailwindcss";
 
-/* Tonki — paleta clara (contenido) + chrome oscuro (barras de navegación) */
+/* Tonki — paleta abeja (rebrand 2026) */
 :root {
-  /* Área de contenido: gris claro → blanco */
-  --tonki-canvas: #f4f4f5;
-  --tonki-surface: #ffffff;
-  --tonki-elevated: #ffffff;
-  --tonki-surface-hover: #ececee;
-  --tonki-border: #e4e4e7;
-  --tonki-border-strong: #d4d4d8;
-  --tonki-text: #18181b;
-  --tonki-text-secondary: #3f3f46;
-  --tonki-text-muted: #71717a;
-  --tonki-text-faint: #a1a1aa;
+  --font-neo-sans: "Neo Sans Pro", "Neo Sans", sans-serif;
 
-  /* Acento amarillo — sin cambios */
-  --tonki-accent: #f6c941;
-  --tonki-accent-hover: #e8bc2e;
-  --tonki-accent-fg: #0a0a0b;
+  /* Fondo general */
+  --tonki-canvas: #fefdf5;
 
-  /* Chrome: barras superior e inferior (gris oscuro actual) */
-  --tonki-chrome: #121214;
-  --tonki-chrome-elevated: #18181b;
-  --tonki-chrome-hover: #1f1f23;
-  --tonki-chrome-border: #27272a;
-  --tonki-chrome-text: #fafafa;
-  --tonki-chrome-text-secondary: #e4e4e7;
-  --tonki-chrome-text-muted: #a1a1aa;
+  /* Cards, paneles y contenedores flotantes */
+  --tonki-surface: #fcf1c8;
+  --tonki-elevated: #fefdf5;
+  --tonki-surface-hover: #f3e6bc;
+  --tonki-border: #e8dcb8;
+  --tonki-border-strong: #d9c896;
+
+  /* Texto — reemplaza negro */
+  --tonki-text: #2d210d;
+  --tonki-text-secondary: #4a3818;
+  --tonki-text-muted: #6b5530;
+  --tonki-text-faint: #7c7c7c;
+
+  /* Resaltado amarillo (tórax) */
+  --tonki-accent: #f4c542;
+  --tonki-accent-hover: #e3b535;
+  --tonki-accent-fg: #2d210d;
+
+  /* CTA — lengua de abeja */
+  --tonki-cta: #9d4d03;
+  --tonki-cta-hover: #873f02;
+  --tonki-cta-fg: #fefdf5;
+
+  /* Chrome: barras superior e inferior (abdomen) */
+  --tonki-chrome: #2d210d;
+  --tonki-chrome-elevated: #3a2b12;
+  --tonki-chrome-hover: #453318;
+  --tonki-chrome-border: #52401c;
+  --tonki-chrome-text: #fefdf5;
+  --tonki-chrome-text-secondary: #fcf1c8;
+  --tonki-chrome-text-muted: #c9b88a;
 
   /* Overlays y contenedores de media */
-  --tonki-overlay: rgba(0, 0, 0, 0.55);
-  --tonki-media-bg: #09090b;
+  --tonki-overlay: rgba(45, 33, 13, 0.55);
+  --tonki-media-bg: #2d210d;
 
   --tonki-danger: #dc2626;
   --tonki-danger-muted: #fecaca;
@@ -42,8 +54,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-neo-sans);
+  --font-mono: var(--font-neo-sans);
 
   --color-tonki-canvas: var(--tonki-canvas);
   --color-tonki-surface: var(--tonki-surface);
@@ -58,6 +70,9 @@
   --color-tonki-accent: var(--tonki-accent);
   --color-tonki-accent-hover: var(--tonki-accent-hover);
   --color-tonki-accent-fg: var(--tonki-accent-fg);
+  --color-tonki-cta: var(--tonki-cta);
+  --color-tonki-cta-hover: var(--tonki-cta-hover);
+  --color-tonki-cta-fg: var(--tonki-cta-fg);
   --color-tonki-chrome: var(--tonki-chrome);
   --color-tonki-chrome-elevated: var(--tonki-chrome-elevated);
   --color-tonki-chrome-hover: var(--tonki-chrome-hover);
@@ -72,5 +87,12 @@
 body {
   background: var(--tonki-canvas);
   color: var(--tonki-text);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-neo-sans);
+}
+
+input,
+textarea,
+button,
+select {
+  font-family: inherit;
 }

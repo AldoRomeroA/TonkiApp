@@ -29,6 +29,19 @@ export interface WalletLoginRequest {
   signature: string;
 }
 
+/** Returned when Freighter signature is valid but the wallet is not registered yet. */
+export interface WalletNeedsRegistrationResponse {
+  needsRegistration: true;
+  publicKey: string;
+  message: string;
+}
+
+export interface WalletRegisterRequest {
+  email: string;
+  birthDate: string;
+  name?: string;
+}
+
 /** Wrapped by `apiSuccess`: `{ success: true, user, role }` */
 export interface AuthMePayload {
   user: PublicUser;

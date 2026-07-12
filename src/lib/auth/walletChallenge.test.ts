@@ -154,4 +154,33 @@ describe("wallet challenge replay prevention", () => {
     const cleared = res.cookies.get(WALLET_NONCE_COOKIE);
     expect(cleared?.maxAge).toBe(0);
   });
+
+  it("returns needsRegistration and pending cookie when wallet is unknown", async () => {
+    const keypair = StellarSdk.Keypair.random();
+    const nonce = generateWalletNonce();
+    const signed = signWalletChallenge(
+      keypair.publicKey(),
+      keypair.secret(),
+      nonce
+    );
+
+    mockCookieGet.mockReturnValue({ value: nonce });
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+
+    const res = await walletLogin(
+      new Request("http://localhost/api/auth/wallet-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(signed),
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.needsRegistration).toBe(true);
+    expect(body.publicKey).toBe(keypair.publicKey());
+    expect(prisma.user.create).not.toHaveBeenCalled();
+    expect(res.cookies.get(WALLET_NONCE_COOKIE)?.maxAge).toBe(0);
+    expect(res.cookies.get("tonki_wallet_pending")?.value).toBeTruthy();
+  });
 });

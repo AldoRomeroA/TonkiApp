@@ -301,7 +301,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
       <button
         type="button"
         aria-label="Cerrar editor"
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-tonki-chrome/70 backdrop-blur-sm"
         onClick={onClose}
       />
       <div className="relative z-[1] flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-tonki-border bg-tonki-surface shadow-xl sm:rounded-2xl">
@@ -375,7 +375,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                   return (
                     <button
                       type="button"
-                      className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-tonki-chrome-border ${
+                      className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold text-tonki-chrome-text ring-1 ring-tonki-chrome-border ${
                         off ? "bg-tonki-chrome-elevated/90" : "bg-tonki-media-bg/80"
                       }`}
                       onClick={(ev) => {
@@ -402,7 +402,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                 overlay={(item) => (
                   <button
                     type="button"
-                    className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-tonki-chrome-border hover:bg-red-950/40"
+                    className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-[11px] font-semibold text-tonki-chrome-text ring-1 ring-tonki-chrome-border hover:bg-red-950/40"
                     onClick={(ev) => {
                       ev.preventDefault();
                       ev.stopPropagation();
@@ -481,7 +481,7 @@ function EditPostSheet({ post, open, onClose, onSaved }: EditSheetProps) {
                     ) : null}
                     <button
                       type="button"
-                      className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-tonki-chrome-border"
+                      className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-[11px] font-semibold text-tonki-chrome-text ring-1 ring-tonki-chrome-border"
                       onClick={() => removeDraft(d.id)}
                     >
                       ×

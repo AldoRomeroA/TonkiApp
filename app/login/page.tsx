@@ -7,7 +7,12 @@ import {
   requestAccess,
 } from "@stellar/freighter-api";
 import { readJsonSafely } from "src/lib/api/readJsonSafely";
-import type { AuthResponse, UserRole } from "src/types/auth";
+import type {
+  AuthResponse,
+  UserRole,
+  WalletNeedsRegistrationResponse,
+} from "src/types/auth";
+import "./login.css";
 
 function sanitizeReturnPath(
   raw: string | null,
@@ -80,6 +85,12 @@ type LoginState = {
   isSubmitting: boolean;
   isWalletLoading: boolean;
   isGoogleLoading: boolean;
+  walletRegisterMode: boolean;
+  pendingPublicKey: string;
+  regName: string;
+  regEmail: string;
+  regBirthDate: string;
+  isRegistering: boolean;
 };
 
 type LoginAction =
@@ -88,7 +99,16 @@ type LoginAction =
   | { type: "SET_ERROR"; payload: string }
   | { type: "SET_SUBMITTING"; payload: boolean }
   | { type: "SET_WALLET_LOADING"; payload: boolean }
-  | { type: "SET_GOOGLE_LOADING"; payload: boolean };
+  | { type: "SET_GOOGLE_LOADING"; payload: boolean }
+  | {
+      type: "START_WALLET_REGISTER";
+      payload: { publicKey: string };
+    }
+  | { type: "CANCEL_WALLET_REGISTER" }
+  | { type: "SET_REG_NAME"; payload: string }
+  | { type: "SET_REG_EMAIL"; payload: string }
+  | { type: "SET_REG_BIRTH_DATE"; payload: string }
+  | { type: "SET_REGISTERING"; payload: boolean };
 
 const initialState: LoginState = {
   username: "",
@@ -97,6 +117,12 @@ const initialState: LoginState = {
   isSubmitting: false,
   isWalletLoading: false,
   isGoogleLoading: false,
+  walletRegisterMode: false,
+  pendingPublicKey: "",
+  regName: "",
+  regEmail: "",
+  regBirthDate: "",
+  isRegistering: false,
 };
 
 function loginReducer(state: LoginState, action: LoginAction): LoginState {
@@ -113,6 +139,34 @@ function loginReducer(state: LoginState, action: LoginAction): LoginState {
       return { ...state, isWalletLoading: action.payload };
     case "SET_GOOGLE_LOADING":
       return { ...state, isGoogleLoading: action.payload };
+    case "START_WALLET_REGISTER":
+      return {
+        ...state,
+        walletRegisterMode: true,
+        pendingPublicKey: action.payload.publicKey,
+        error: "",
+        regName: "",
+        regEmail: "",
+        regBirthDate: "",
+      };
+    case "CANCEL_WALLET_REGISTER":
+      return {
+        ...state,
+        walletRegisterMode: false,
+        pendingPublicKey: "",
+        regName: "",
+        regEmail: "",
+        regBirthDate: "",
+        error: "",
+      };
+    case "SET_REG_NAME":
+      return { ...state, regName: action.payload };
+    case "SET_REG_EMAIL":
+      return { ...state, regEmail: action.payload };
+    case "SET_REG_BIRTH_DATE":
+      return { ...state, regBirthDate: action.payload };
+    case "SET_REGISTERING":
+      return { ...state, isRegistering: action.payload };
     default:
       return state;
   }
@@ -162,7 +216,7 @@ const GoogleButton = memo(function GoogleButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center justify-center gap-3 rounded-xl bg-white px-4 py-3 font-semibold text-[#1f1f1f] shadow-sm transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+      className="login-btn login-btn-outline login-btn-google"
     >
       <GoogleIcon />
       {isLoading ? "Conectando con Gmail…" : "Continuar con Gmail"}
@@ -188,25 +242,25 @@ const LoginForm = memo(function LoginForm({
   onSubmit,
 }: LoginFormProps) {
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} className="login-form">
       <input
         type="text"
         placeholder="Usuario o correo"
         value={username}
         onChange={(e) => onUsernameChange(e.target.value)}
-        className="rounded-xl border border-tonki-border bg-tonki-surface px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
+        className="login-input"
       />
       <input
         type="password"
         placeholder="Contraseña"
         value={password}
         onChange={(e) => onPasswordChange(e.target.value)}
-        className="rounded-xl border border-tonki-border bg-tonki-surface px-4 py-3 text-tonki-text placeholder:text-tonki-text-faint transition-colors focus:border-tonki-accent focus:outline-none"
+        className="login-input"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-1 rounded-xl bg-tonki-accent px-4 py-3 font-semibold text-tonki-accent-fg transition-colors hover:bg-tonki-accent-hover disabled:cursor-not-allowed disabled:opacity-70"
+        className="login-btn login-btn-primary"
       >
         {isSubmitting ? "Entrando..." : "Entrar"}
       </button>
@@ -227,10 +281,96 @@ const WalletButton = memo(function WalletButton({
     <button
       onClick={onClick}
       disabled={isLoading}
-      className="rounded-xl border border-tonki-accent px-4 py-3 font-semibold text-tonki-accent transition-colors hover:bg-tonki-accent hover:text-tonki-accent-fg disabled:cursor-not-allowed disabled:opacity-70"
+      className="login-btn login-btn-outline"
     >
-      {isLoading ? "Conectando..." : "Conectar Wallet (Freighter)"}
+      {isLoading ? "Conectando..." : "Conecta con Freighter"}
     </button>
+  );
+});
+
+type WalletRegisterFormProps = {
+  name: string;
+  email: string;
+  birthDate: string;
+  publicKey: string;
+  isSubmitting: boolean;
+  onNameChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onBirthDateChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+};
+
+const WalletRegisterForm = memo(function WalletRegisterForm({
+  name,
+  email,
+  birthDate,
+  publicKey,
+  isSubmitting,
+  onNameChange,
+  onEmailChange,
+  onBirthDateChange,
+  onSubmit,
+  onCancel,
+}: WalletRegisterFormProps) {
+  const shortKey =
+    publicKey.length > 12
+      ? `${publicKey.slice(0, 6)}…${publicKey.slice(-4)}`
+      : publicKey;
+
+  return (
+    <form onSubmit={onSubmit} className="login-form">
+      <p className="login-register-intro">
+        Wallet verificada (<span className="login-mono">{shortKey}</span>).
+        Completa tus datos para crear tu cuenta.
+      </p>
+      <input
+        type="text"
+        name="name"
+        placeholder="Nombre (opcional)"
+        value={name}
+        onChange={(e) => onNameChange(e.target.value)}
+        className="login-input"
+        autoComplete="name"
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="Correo electrónico"
+        value={email}
+        onChange={(e) => onEmailChange(e.target.value)}
+        className="login-input"
+        required
+        autoComplete="email"
+      />
+      <label className="login-field-label" htmlFor="wallet-birth-date">
+        Fecha de nacimiento
+      </label>
+      <input
+        id="wallet-birth-date"
+        type="date"
+        name="birthDate"
+        value={birthDate}
+        onChange={(e) => onBirthDateChange(e.target.value)}
+        className="login-input"
+        required
+      />
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="login-btn login-btn-primary"
+      >
+        {isSubmitting ? "Registrando..." : "Crear cuenta"}
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={isSubmitting}
+        className="login-btn login-btn-outline"
+      >
+        Cancelar
+      </button>
+    </form>
   );
 });
 
@@ -370,7 +510,11 @@ function LoginPageInner() {
         body: JSON.stringify({ publicKey, signature }),
       });
 
-      type WalletLoginApiBody = AuthResponse & { error?: string };
+      type WalletLoginApiBody = Partial<AuthResponse> &
+        Partial<WalletNeedsRegistrationResponse> & {
+          error?: string;
+          success?: boolean;
+        };
 
       const data = await readJsonSafely<WalletLoginApiBody>(res);
       if (data === null) {
@@ -380,14 +524,36 @@ function LoginPageInner() {
         });
         return;
       }
-      if (res.ok) {
-        handleLoginSuccess(data);
-      } else {
+      if (!res.ok) {
         dispatch({
           type: "SET_ERROR",
           payload: data.error || "Error en login con wallet",
         });
+        return;
       }
+
+      if (data.needsRegistration && data.publicKey) {
+        dispatch({
+          type: "START_WALLET_REGISTER",
+          payload: { publicKey: data.publicKey },
+        });
+        return;
+      }
+
+      if (data.user && data.role && data.redirectTo) {
+        handleLoginSuccess({
+          message: data.message ?? "Inicio de sesión exitoso",
+          user: data.user,
+          role: data.role,
+          redirectTo: data.redirectTo,
+        });
+        return;
+      }
+
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Respuesta inválida del servidor",
+      });
     } catch (err) {
       console.error(err);
       dispatch({
@@ -398,6 +564,63 @@ function LoginPageInner() {
       dispatch({ type: "SET_WALLET_LOADING", payload: false });
     }
   }, [handleLoginSuccess]);
+
+  const handleWalletRegister = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      dispatch({ type: "SET_ERROR", payload: "" });
+      dispatch({ type: "SET_REGISTERING", payload: true });
+      try {
+        const res = await fetch("/api/auth/wallet-register", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: state.regEmail,
+            birthDate: state.regBirthDate,
+            ...(state.regName.trim() ? { name: state.regName.trim() } : {}),
+          }),
+        });
+
+        type RegisterApiBody = AuthResponse & { error?: string };
+
+        const data = await readJsonSafely<RegisterApiBody>(res);
+        if (data === null) {
+          dispatch({
+            type: "SET_ERROR",
+            payload: "Respuesta inválida del servidor",
+          });
+          return;
+        }
+        if (!res.ok) {
+          dispatch({
+            type: "SET_ERROR",
+            payload: data.error || "No se pudo completar el registro",
+          });
+          if (res.status === 401) {
+            dispatch({ type: "CANCEL_WALLET_REGISTER" });
+          }
+          return;
+        }
+
+        handleLoginSuccess(data);
+      } catch (err) {
+        console.error(err);
+        dispatch({
+          type: "SET_ERROR",
+          payload: "No se pudo completar el registro",
+        });
+      } finally {
+        dispatch({ type: "SET_REGISTERING", payload: false });
+      }
+    },
+    [
+      handleLoginSuccess,
+      state.regBirthDate,
+      state.regEmail,
+      state.regName,
+    ]
+  );
 
   const handleGoogleLogin = useCallback(() => {
     dispatch({ type: "SET_ERROR", payload: "" });
@@ -413,63 +636,92 @@ function LoginPageInner() {
     dispatch({ type: "SET_PASSWORD", payload: value });
   }, []);
 
+  const handleRegNameChange = useCallback((value: string) => {
+    dispatch({ type: "SET_REG_NAME", payload: value });
+  }, []);
+
+  const handleRegEmailChange = useCallback((value: string) => {
+    dispatch({ type: "SET_REG_EMAIL", payload: value });
+  }, []);
+
+  const handleRegBirthDateChange = useCallback((value: string) => {
+    dispatch({ type: "SET_REG_BIRTH_DATE", payload: value });
+  }, []);
+
+  const handleCancelWalletRegister = useCallback(() => {
+    dispatch({ type: "CANCEL_WALLET_REGISTER" });
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-tonki-canvas px-4">
-      <div className="mx-auto flex w-full max-w-sm flex-col gap-8 rounded-2xl border border-tonki-border bg-tonki-surface p-8 shadow-xl shadow-black/10">
-        {/* Logo / Título */}
-        <div className="mb-0 flex flex-col items-center gap-2">
-          <span className="text-3xl font-bold tracking-tight text-tonki-accent sm:text-4xl">
-            TonkiApp
-          </span>
-          <p className="text-center text-sm text-tonki-text-muted">
-            Crea tu wallet en segundos con tu cuenta de Gmail
-          </p>
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-brand">
+          <img
+            src="/Logos-Tonki-SVG/Logo lateral caf-amarillo.svg"
+            alt="Tonki"
+            width={180}
+            height={62}
+            className="login-logo"
+          />
         </div>
 
-        <GoogleButton
-          onClick={handleGoogleLogin}
-          isLoading={state.isGoogleLoading}
-          disabled={state.isGoogleLoading || state.isSubmitting}
-        />
+        {state.walletRegisterMode ? (
+          <>
+            <WalletRegisterForm
+              name={state.regName}
+              email={state.regEmail}
+              birthDate={state.regBirthDate}
+              publicKey={state.pendingPublicKey}
+              isSubmitting={state.isRegistering}
+              onNameChange={handleRegNameChange}
+              onEmailChange={handleRegEmailChange}
+              onBirthDateChange={handleRegBirthDateChange}
+              onSubmit={handleWalletRegister}
+              onCancel={handleCancelWalletRegister}
+            />
+            {state.error && <p className="login-error">{state.error}</p>}
+          </>
+        ) : (
+          <>
+            <LoginForm
+              username={state.username}
+              password={state.password}
+              isSubmitting={state.isSubmitting}
+              onUsernameChange={handleUsernameChange}
+              onPasswordChange={handlePasswordChange}
+              onSubmit={handleSubmit}
+            />
 
-        {/* Separador */}
-        <div className="flex items-center gap-4">
-          <hr className="flex-1 border-tonki-border" />
-          <span className="text-xs font-medium uppercase tracking-wider text-tonki-text-faint">
-            o usa tu cuenta
-          </span>
-          <hr className="flex-1 border-tonki-border" />
-        </div>
+            {state.error && <p className="login-error">{state.error}</p>}
 
-        <LoginForm
-          username={state.username}
-          password={state.password}
-          isSubmitting={state.isSubmitting}
-          onUsernameChange={handleUsernameChange}
-          onPasswordChange={handlePasswordChange}
-          onSubmit={handleSubmit}
-        />
+            <div className="login-divider">
+              <hr className="login-divider-line" />
+              <span className="login-divider-label">Crea tu cuenta con Gmail</span>
+              <hr className="login-divider-line" />
+            </div>
 
-        {/* Error */}
-        {state.error && (
-          <p className="text-center text-sm text-tonki-danger">{state.error}</p>
-        )}
+            <GoogleButton
+              onClick={handleGoogleLogin}
+              isLoading={state.isGoogleLoading}
+              disabled={
+                state.isGoogleLoading ||
+                state.isSubmitting ||
+                state.isWalletLoading
+              }
+            />
 
-        {/* Opciones avanzadas */}
-        <details className="group text-center">
-          <summary className="cursor-pointer list-none text-xs font-medium text-tonki-text-faint transition-colors hover:text-tonki-text-muted">
-            Opciones avanzadas
-          </summary>
-          <div className="mt-4 flex flex-col gap-3">
-            <p className="text-xs text-tonki-text-faint">
-              ¿Ya tienes una wallet de Stellar? Conéctala con Freighter.
-            </p>
+            <div className="login-divider">
+              <hr className="login-divider-line" />
+              <span className="login-divider-label">¿Ya tienes Wallet?</span>
+              <hr className="login-divider-line" />
+            </div>
+
             <WalletButton
               onClick={handleWalletLogin}
               isLoading={state.isWalletLoading}
             />
-          </div>
-        </details>
+          </>
+        )}
       </div>
     </div>
   );
@@ -479,8 +731,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-tonki-canvas">
-          <p className="text-sm text-tonki-text-muted">Cargando…</p>
+        <div className="login-fallback">
+          <p className="login-fallback-text">Cargando…</p>
         </div>
       }
     >

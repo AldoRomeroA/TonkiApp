@@ -227,7 +227,7 @@ export function WalletOnboardingClient() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-tonki-canvas px-4">
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-tonki-border bg-tonki-surface p-8 shadow-2xl shadow-black/40">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-tonki-border bg-tonki-surface p-8 shadow-2xl shadow-tonki-chrome/25">
         <div className="flex flex-col items-center gap-2 text-center">
           <span className="inline-flex rounded-full border border-tonki-accent/30 bg-tonki-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-tonki-accent">
             Stellar Testnet

@@ -1,31 +1,37 @@
 "use client";
 
-import { FallbackNextImage } from "src/components/FallbackNextImage";
 import Link from "next/link";
 
 import { AccountSlideOverTrigger } from "src/components/AccountSlideOver";
 
-type AppHeaderProps = {
-  /** Texto opcional centrado (p. ej. "Centro admin"). */
+const ADMIN_LOGO = "/Logos-Tonki-SVG/Isotipo amarillo-crema.svg";
+
+type AdminHeaderProps = {
+  /** Texto opcional centrado (p. ej. "Airdrop"). */
   title?: string;
   /** Slot opcional a la derecha; por defecto muestra el acceso a la cuenta. */
   right?: React.ReactNode;
 };
 
 /**
- * Cabecera compartida para las páginas internas (feed, recompensas, cuenta…).
- * Mantiene marca y estilo (sticky + blur) consistentes
- * para que todas las vistas se sientan parte de la misma app.
+ * Cabecera exclusiva del área admin (/admin/*).
+ * No reutiliza AppHeader del feed/cuenta; usa el isotipo admin.
  */
-export function AppHeader({ title, right }: AppHeaderProps) {
+export function AdminHeader({ title, right }: AdminHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-tonki-chrome-border bg-tonki-chrome/95 backdrop-blur-md">
       <div className="mx-auto flex w-full items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link
-          href="/dashboard"
+          href="/admin/dashboard"
           className="flex shrink-0 items-center gap-2.5 text-tonki-chrome-text transition-colors hover:text-tonki-accent"
         >
-          <FallbackNextImage src="/logo.png" alt="Tonki" width={32} height={32} priority />
+          <img
+            src={ADMIN_LOGO}
+            alt="Tonki Admin"
+            width={32}
+            height={32}
+            className="h-8 w-8"
+          />
           <span className="text-lg font-bold tracking-tight">Tonki</span>
         </Link>
 

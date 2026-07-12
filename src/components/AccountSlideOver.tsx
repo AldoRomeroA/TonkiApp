@@ -154,7 +154,7 @@ export function AccountSlideOverGroup({ children }: AccountSlideOverGroupProps) 
             <motion.button
               type="button"
               aria-label="Cerrar panel de cuenta"
-              className="absolute inset-0 h-full w-full bg-black/55 backdrop-blur-sm"
+              className="absolute inset-0 h-full w-full bg-tonki-chrome/55 backdrop-blur-sm"
               onClick={() => setOpen(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

@@ -12,7 +12,10 @@ import {
   createSessionToken,
 } from "src/lib/auth/session";
 import { applyAuthFailureDelay } from "src/lib/auth/security";
-import type { AuthResponse } from "src/types/auth";
+import type {
+  AuthResponse,
+  WalletNeedsRegistrationResponse,
+} from "src/types/auth";
 import { normalizeUserRole } from "src/lib/auth/userRole";
 import { logAndRespondAuthInfrastructureError } from "src/lib/api/authRouteCatch";
 import {
@@ -20,23 +23,13 @@ import {
   buildWalletChallengeMessage,
   clearWalletNonceCookie,
 } from "src/lib/auth/walletChallenge";
+import {
+  attachWalletPendingCookie,
+  createWalletPendingToken,
+} from "src/lib/auth/walletPendingRegistration";
 
 /** Debe coincidir con el prefijo que usa Freighter `signMessage` (@stellar/freighter-api). */
 const SIGN_MESSAGE_PREFIX = "Stellar Signed Message:\n";
-const TEST_USERS = [
-  {
-    wallet_address: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-    name: "Test User",
-    type: "user" as const,
-    status: "active" as const,
-  },
-  {
-    wallet_address: "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBRD",
-    name: "Test Admin",
-    type: "admin" as const,
-    status: "active" as const,
-  },
-];
 
 export async function POST(req: Request) {
   try {
@@ -95,36 +88,29 @@ export async function POST(req: Request) {
       return res;
     }
 
-    let user = await prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: { wallet_address: publicKey },
     });
-    // Registro automático si el usuario no existe
+
     if (!user) {
-      const hardcodedUser =
-        process.env.NODE_ENV === "development"
-          ? TEST_USERS.find((testUser) => testUser.wallet_address === publicKey)
-          : undefined;
-
-      if (hardcodedUser) {
-        user = await prisma.user.create({
-          data: {
-            name: hardcodedUser.name,
-            wallet_address: hardcodedUser.wallet_address,
-            type: hardcodedUser.type,
-            status: hardcodedUser.status,
-          },
-        });
-      } else {
-        const shortKey = `${publicKey.slice(0, 6)}…${publicKey.slice(-4)}`;
-
-        user = await prisma.user.create({
-          data: {
-            name: `Wallet ${shortKey}`,
-            wallet_address: publicKey,
-            type: "user",
-            status: "active",
-          },
-        });
+      try {
+        const pendingToken = await createWalletPendingToken(publicKey);
+        const body: WalletNeedsRegistrationResponse = {
+          needsRegistration: true,
+          publicKey,
+          message: "Completa tu registro para continuar",
+        };
+        const res = apiSuccess(body);
+        clearWalletNonceCookie(res);
+        attachWalletPendingCookie(res, pendingToken);
+        return res;
+      } catch {
+        const res = apiError(
+          "Error de autenticación: servidor sin AUTH_SECRET válido",
+          500
+        );
+        clearWalletNonceCookie(res);
+        return res;
       }
     }
 

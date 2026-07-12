@@ -1,7 +1,5 @@
 "use client";
 
-import { FallbackNextImage } from "src/components/FallbackNextImage";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -11,11 +9,7 @@ import {
 
 import { readJsonSafely } from "src/lib/api/readJsonSafely";
 import type { AuthMePayload } from "src/types/auth";
-import {
-  AccountSlideOverGroup,
-  AccountSlideOverTrigger,
-  useOpenAccountPanel,
-} from "src/components/AccountSlideOver";
+import { useOpenAccountPanel } from "src/components/AccountSlideOver";
 
 import { AdminComposerTab } from "./AdminComposerTab";
 import { AdminMetricsTab } from "./AdminMetricsTab";
@@ -103,69 +97,39 @@ export default function AdminDashboardPage() {
 
   if (gatePending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-tonki-canvas text-sm text-tonki-text-muted">
+      <div className="flex items-center justify-center px-4 py-16 text-sm text-tonki-text-muted">
         Comprobando permisos…
       </div>
     );
   }
 
   return (
-    <AccountSlideOverGroup>
-      <div className="min-h-screen bg-tonki-canvas text-tonki-text">
-        <header className="sticky top-0 z-40 border-b border-tonki-chrome-border bg-tonki-chrome/95 backdrop-blur-md">
-          <div className="mx-auto grid w-full max-w-[600px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 sm:px-5">
-            <Link
-              href="/dashboard"
-              className="flex shrink-0 items-center gap-2.5 justify-self-start text-tonki-chrome-text transition-colors hover:text-tonki-accent"
-            >
-              <FallbackNextImage src="/logo.png" alt="Tonki" width={28} height={28} priority />
-              <span className="hidden text-base font-bold tracking-tight sm:inline">
-                Tonki
-              </span>
-            </Link>
-            <h1 className="max-w-[min(260px,calc(100vw-9rem))] justify-self-center text-center text-[15px] font-bold leading-snug text-tonki-chrome-text sm:max-w-xs sm:text-[17px]">
-              Centro admin
-            </h1>
-            <AccountSlideOverTrigger className="justify-self-end truncate text-sm text-tonki-chrome-text-muted transition-colors hover:text-tonki-chrome-text-secondary sm:max-w-[min(140px,calc((100vw-10rem)/2))] sm:text-base" />
-          </div>
-
-          <div className="mx-auto grid w-full max-w-[600px] grid-cols-3 border-y border-tonki-chrome-border">
-            {tabs("compose", "Nuevo post")}
-            {tabs("mine", "Mis publicaciones")}
-            {tabs("metrics", "Métricas")}
-          </div>
-        </header>
-
-        <main className="mx-auto w-full max-w-[600px] pb-24">
-          <SessionAdminLine label={displayName} />
-
-          <div role="tabpanel">
-            {tab === "compose" ? (
-              <AdminComposerTab />
-            ) : tab === "mine" ? (
-              <AdminMyPostsTab />
-            ) : (
-              <AdminMetricsTab />
-            )}
-          </div>
-        </main>
-
-        <nav className="fixed bottom-4 left-4 right-4 z-30 mx-auto flex w-[min(560px,calc(100%-2rem))] justify-center gap-8 rounded-full border border-tonki-chrome-border bg-tonki-chrome/95 px-6 py-3 text-sm font-medium text-tonki-chrome-text-muted shadow-lg shadow-black/20 backdrop-blur-md md:hidden">
-          <Link
-            href="/"
-            className="transition-colors hover:text-tonki-chrome-text-secondary"
-          >
-            Tonki
-          </Link>
-          <Link
-            href="/dashboard"
-            className="transition-colors hover:text-tonki-chrome-text-secondary"
-          >
-            Feed
-          </Link>
-          <AccountSlideOverTrigger className="max-w-[5.5rem] truncate transition-colors hover:text-tonki-chrome-text-secondary" />
-        </nav>
+    <>
+      <div className="border-b border-tonki-chrome-border bg-tonki-chrome/95">
+        <h1 className="sr-only">Centro admin</h1>
+        <div
+          role="tablist"
+          className="mx-auto grid w-full grid-cols-3 border-t border-tonki-chrome-border"
+        >
+          {tabs("compose", "Nuevo post")}
+          {tabs("mine", "Mis publicaciones")}
+          {tabs("metrics", "Métricas")}
+        </div>
       </div>
-    </AccountSlideOverGroup>
+
+      <main className="mx-auto w-full pb-4">
+        <SessionAdminLine label={displayName} />
+
+        <div role="tabpanel">
+          {tab === "compose" ? (
+            <AdminComposerTab />
+          ) : tab === "mine" ? (
+            <AdminMyPostsTab />
+          ) : (
+            <AdminMetricsTab />
+          )}
+        </div>
+      </main>
+    </>
   );
 }

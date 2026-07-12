@@ -294,7 +294,7 @@ export function PostComposerForm({
             <button
               type="button"
               aria-label={`Quitar ${item.alt ?? "adjunto"}`}
-              className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/70 px-2 py-0.5 text-xs font-semibold text-white ring-1 ring-tonki-chrome-border hover:bg-red-950/90"
+              className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/70 px-2 py-0.5 text-xs font-semibold text-tonki-chrome-text ring-1 ring-tonki-chrome-border hover:bg-red-950/90"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -332,7 +332,7 @@ export function PostComposerForm({
               <button
                 type="button"
                 aria-label="Quitar vídeo"
-                className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-xs font-semibold text-white ring-1 ring-tonki-chrome-border hover:bg-red-950/90"
+                className="absolute right-2 top-2 z-20 rounded-full bg-tonki-media-bg/80 px-2 py-0.5 text-xs font-semibold text-tonki-chrome-text ring-1 ring-tonki-chrome-border hover:bg-red-950/90"
                 onClick={() => removeDraft(d.id)}
               >
                 ×

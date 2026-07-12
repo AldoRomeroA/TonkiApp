@@ -61,7 +61,7 @@ export function PostOverlayModal({ post, onClose }: PostOverlayModalProps) {
           <motion.button
             type="button"
             aria-label="Cerrar publicación"
-            className="absolute inset-0 h-full w-full bg-black/65 backdrop-blur-sm"
+            className="absolute inset-0 h-full w-full bg-tonki-chrome/65 backdrop-blur-sm"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

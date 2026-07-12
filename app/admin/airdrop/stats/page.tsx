@@ -8,7 +8,7 @@ import { formatCampaignRangeLabel } from "src/lib/airdrop/schemas";
 import type { AirdropCampaignArchiveRecord } from "src/lib/airdrop/types";
 
 const ACCENT_BUTTON =
-  "rounded-full bg-tonki-accent px-5 py-2.5 text-sm font-bold text-tonki-accent-fg transition-colors hover:bg-tonki-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-xl bg-tonki-accent px-5 py-2.5 text-sm font-semibold leading-none text-tonki-accent-fg transition-colors hover:bg-tonki-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es", { dateStyle: "medium" });
@@ -122,7 +122,7 @@ export default function AdminAirdropStatsPage() {
 
   return (
     <main className="mx-auto w-full border-x border-tonki-border pb-10">
-      <header className="border-b border-tonki-border bg-tonki-surface px-4 py-5 sm:px-6">
+      <header className="border-b border-tonki-border px-4 py-5 sm:px-6">
         <Link
           href="/admin/airdrop"
           className="text-sm font-medium text-tonki-text-muted transition-colors hover:text-tonki-accent"

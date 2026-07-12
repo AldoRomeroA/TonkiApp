@@ -7,7 +7,7 @@ import { fetchAdminAirdrop } from "src/lib/airdrop/fetchAdminAirdropClient";
 import type { AirdropPagePayload } from "src/lib/airdrop/types";
 
 const ACCENT_BUTTON =
-  "rounded-full bg-tonki-accent px-5 py-2.5 text-sm font-bold text-tonki-accent-fg transition-colors hover:bg-tonki-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
+  "box-border inline-flex h-10 w-40 shrink-0 items-center justify-center rounded-xl border-0 bg-tonki-accent px-3 text-[14px] font-semibold leading-none text-tonki-accent-fg no-underline transition-colors hover:bg-tonki-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
 function truncateId(id: string): string {
   if (id.length <= 12) return id;
@@ -97,7 +97,7 @@ export default function AdminAirdropPage() {
         <button
           type="button"
           onClick={() => void load()}
-          className="mt-4 rounded-full border border-tonki-border px-4 py-2 text-sm font-semibold text-tonki-text-secondary hover:bg-tonki-surface-hover"
+          className="mt-4 rounded-xl border border-tonki-border px-4 py-2 text-sm font-semibold text-tonki-text-secondary hover:bg-tonki-surface-hover"
         >
           Reintentar
         </button>
@@ -109,7 +109,7 @@ export default function AdminAirdropPage() {
 
   return (
     <main className="mx-auto w-full border-x border-tonki-border pb-8">
-      <header className="border-b border-tonki-border bg-tonki-surface px-4 py-5 sm:px-6">
+      <header className="border-b border-tonki-border px-4 py-5 sm:px-6">
         <h1 className="text-2xl font-bold tracking-tight text-tonki-text">Airdrop</h1>
         <p className="mt-1 text-sm text-tonki-text-muted">
           Recompensas para tus usuarios más activos
@@ -238,7 +238,7 @@ export default function AdminAirdropPage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className={ACCENT_BUTTON}
+          className={`${ACCENT_BUTTON} text-sm font-bold`}
         >
           {loading ? "Actualizando…" : "Actualizar"}
         </button>

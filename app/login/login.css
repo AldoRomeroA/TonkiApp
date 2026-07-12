@@ -1,0 +1,224 @@
+/* Login-only theme — does not affect global Tonki tokens */
+
+.login-page {
+  --login-bg: #141414;
+  --login-card: rgba(254, 253, 245, 0.78);
+  --login-elevated: rgba(254, 253, 245, 0.92);
+  --login-hover: rgba(243, 230, 188, 0.55);
+  --login-border: rgba(45, 33, 13, 0.14);
+  --login-text: #2d210d;
+  --login-text-muted: #6b5530;
+  --login-accent: #d4a84b;
+  --login-accent-hover: #c4983f;
+  --login-accent-fg: #2d210d;
+  --login-chrome: #1a1a1a;
+  --login-danger: #b91c1c;
+
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: var(--login-bg);
+  background-image: url("/Logos-Tonki-SVG/hex-bg.jpg");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  color: var(--login-text);
+}
+
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.28);
+  pointer-events: none;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  width: 100%;
+  max-width: 420px;
+  flex-direction: column;
+  gap: 1.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--login-card);
+  padding: 2rem 1.75rem;
+  box-shadow:
+    0 20px 40px -16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.login-brand {
+  margin-bottom: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.login-logo {
+  height: auto;
+  width: 100%;
+  max-width: 180px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.login-input {
+  border-radius: 0.75rem;
+  border: 1px solid var(--login-border);
+  background: var(--login-elevated);
+  padding: 0.8rem 1rem;
+  color: var(--login-text);
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.login-input::placeholder {
+  color: color-mix(in srgb, var(--login-text) 45%, transparent);
+}
+
+.login-input:focus {
+  border-color: color-mix(in srgb, var(--login-accent) 70%, var(--login-text));
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--login-accent) 22%, transparent);
+  background: #fefdf5;
+}
+
+.login-btn {
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.login-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.login-btn-primary {
+  width: 100%;
+  margin-top: 0.15rem;
+  border: 1px solid transparent;
+  background: var(--login-accent);
+  color: var(--login-accent-fg);
+  box-shadow: none;
+}
+
+.login-btn-primary:hover:not(:disabled) {
+  background: var(--login-accent-hover);
+}
+
+.login-btn-outline {
+  width: 100%;
+  border: 1px solid var(--login-border);
+  background: rgba(254, 253, 245, 0.35);
+  color: var(--login-text);
+}
+
+.login-btn-outline:hover:not(:disabled) {
+  background: var(--login-hover);
+  border-color: color-mix(in srgb, var(--login-text) 22%, transparent);
+}
+
+.login-btn-google {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.login-divider-line {
+  flex: 1;
+  border: none;
+  border-top: 1px solid var(--login-border);
+}
+
+.login-divider-label {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--login-text-muted);
+  white-space: nowrap;
+}
+
+.login-error {
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--login-danger);
+}
+
+.login-register-intro {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.35rem;
+  color: var(--login-text-muted);
+}
+
+.login-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8em;
+  color: var(--login-text);
+}
+
+.login-field-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--login-text-muted);
+}
+
+.login-fallback {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #141414;
+  background-image: url("/Logos-Tonki-SVG/hex-bg.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+.login-fallback::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.28);
+}
+
+.login-fallback-text {
+  position: relative;
+  z-index: 1;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #f5f0e6;
+}
