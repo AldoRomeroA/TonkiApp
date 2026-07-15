@@ -1,4 +1,3 @@
-import prisma from "src/lib/db";
 import { apiError, apiSuccess } from "src/lib/api/response";
 import { requireActiveAdminSession } from "src/lib/api/requireActiveAdmin";
 import { loadAirdropEligibleUsers } from "src/lib/airdrop/loadAirdropEligibleUsers";

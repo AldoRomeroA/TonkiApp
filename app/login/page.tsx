@@ -58,6 +58,14 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
     "La sesión de Gmail expiró. Vuelve a intentarlo.",
   google_oauth_failed:
     "No se pudo iniciar sesión con Gmail. Intenta de nuevo.",
+  google_token_exchange_failed:
+    "Google rechazó el intercambio de token. Revisa GOOGLE_REDIRECT_URI en el servidor (debe ser exactamente https://tonki.io/api/auth/google/callback).",
+  google_nonce_mismatch:
+    "La verificación de Gmail falló (nonce). Vuelve a intentarlo.",
+  google_id_token_invalid:
+    "No se pudo validar la identidad de Google. Intenta de nuevo.",
+  google_oauth_origin_misconfigured:
+    "Falta APP_URL en el servidor (ej. https://tonki.io).",
   google_oauth_infrastructure_error:
     "Tuvimos un problema técnico con Gmail. Intenta más tarde.",
   account_suspended: "Tu cuenta está suspendida. Contacta a soporte.",

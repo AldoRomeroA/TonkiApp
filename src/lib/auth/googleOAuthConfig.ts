@@ -12,10 +12,33 @@ export type GoogleOAuthConfig = {
   redirectUri: string;
 };
 
+function resolveRedirectUri(): string | null {
+  const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
+  if (explicit) return explicit;
+
+  const appUrl =
+    process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!appUrl) return null;
+
+  try {
+    const origin = new URL(appUrl).origin;
+    if (
+      origin.includes("0.0.0.0") ||
+      origin.includes("127.0.0.1") ||
+      origin.includes("[::]")
+    ) {
+      return null;
+    }
+    return `${origin}/api/auth/google/callback`;
+  } catch {
+    return null;
+  }
+}
+
 export function getGoogleOAuthConfig(): GoogleOAuthConfig | null {
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI?.trim();
+  const redirectUri = resolveRedirectUri();
 
   if (!clientId || !clientSecret || !redirectUri) return null;
   return { clientId, clientSecret, redirectUri };

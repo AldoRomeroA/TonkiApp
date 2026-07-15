@@ -86,6 +86,29 @@ function truncateError(message: string, max = 255): string {
   return `${message.slice(0, max - 1)}…`;
 }
 
+/** Keep log payload small/serializable (omit bulky XDR blobs). */
+function compactHorizonPayload(horizon: unknown): unknown {
+  if (!horizon || typeof horizon !== "object") return horizon;
+  const h = horizon as Record<string, unknown>;
+  const extras =
+    h.extras && typeof h.extras === "object"
+      ? (h.extras as Record<string, unknown>)
+      : null;
+  return {
+    hash: typeof h.hash === "string" ? h.hash : null,
+    successful: typeof h.successful === "boolean" ? h.successful : null,
+    ledger: typeof h.ledger === "number" ? h.ledger : null,
+    title: typeof h.title === "string" ? h.title : null,
+    status: typeof h.status === "number" ? h.status : null,
+    detail: typeof h.detail === "string" ? h.detail : null,
+    result_codes: extras?.result_codes ?? h.result_codes ?? null,
+  };
+}
+
+function txHashHex(transaction: Transaction): string {
+  return Buffer.from(transaction.hash()).toString("hex");
+}
+
 /** Prefer Horizon extras (result codes) over the generic title. */
 export function formatHorizonError(err: unknown): {
   message: string;
@@ -380,7 +403,7 @@ export async function submitSignedAirdropTransaction(params: {
       distributions,
       fees: feesPayload,
       asset,
-      horizon,
+      horizon: compactHorizonPayload(horizon),
     });
 
   const { url: horizonUrl, passphrase } = getAirdropHorizonConfig();
@@ -388,6 +411,7 @@ export async function submitSignedAirdropTransaction(params: {
   try {
     const transaction = new Transaction(params.signedXdr.trim(), passphrase);
     const sourcePublicKey = transaction.source;
+    const expectedHash = txHashHex(transaction);
 
     if (sourcePublicKey !== AIRDROP_EMISOR_PUBLIC_KEY) {
       const logId = await writeAirdropLog({
@@ -449,36 +473,48 @@ export async function submitSignedAirdropTransaction(params: {
       response = await server.submitTransaction(transaction);
     } catch (err) {
       const { message, horizon } = formatHorizonError(err);
-      const logId = await writeAirdropLog({
-        configId: config.config_id,
-        transactionHash: null,
-        totalAmount: totalToUsers,
-        usersInvolved: distributions.length,
-        success: false,
-        errorMessage: message,
-        responseJson: snapshotJson(horizon),
-      });
-      return { ok: false, error: message, log_id: logId };
+
+      // Tx may already be included even if the HTTP submit errored/timed out.
+      try {
+        const existing = await server
+          .transactions()
+          .transaction(expectedHash)
+          .call();
+        if (existing.successful) {
+          response = existing as Horizon.HorizonApi.SubmitTransactionResponse;
+        } else {
+          throw err;
+        }
+      } catch {
+        const logId = await writeAirdropLog({
+          configId: config.config_id,
+          transactionHash: null,
+          totalAmount: totalToUsers,
+          usersInvolved: distributions.length,
+          success: false,
+          errorMessage: message,
+          responseJson: snapshotJson(horizon),
+        });
+        return { ok: false, error: message, log_id: logId };
+      }
     }
 
-    const txHash = response.hash ?? null;
-    const success = Boolean(txHash);
-    const logId = await writeAirdropLog({
-      configId: config.config_id,
-      transactionHash: txHash,
-      totalAmount: roundXlm(totalToUsers),
-      usersInvolved: distributions.length,
-      success,
-      errorMessage: success ? null : "Transacción sin hash válido",
-      responseJson: snapshotJson(response),
-    });
+    const txHash = response.hash ?? expectedHash;
 
-    if (!txHash) {
-      return {
-        ok: false,
-        error: "Transacción ejecutada pero sin hash válido",
-        log_id: logId,
-      };
+    let logId: string;
+    try {
+      logId = await writeAirdropLog({
+        configId: config.config_id,
+        transactionHash: txHash,
+        totalAmount: roundXlm(totalToUsers),
+        usersInvolved: distributions.length,
+        success: true,
+        errorMessage: null,
+        responseJson: snapshotJson(response),
+      });
+    } catch {
+      // Chain already succeeded — do not report failure to the admin UI.
+      logId = expectedHash;
     }
 
     return {

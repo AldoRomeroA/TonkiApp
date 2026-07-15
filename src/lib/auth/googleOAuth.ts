@@ -29,18 +29,16 @@ function toBase64Url(buffer: Buffer): string {
 }
 
 export function generateOAuthSecrets(): {
-  state: string;
   nonce: string;
   codeVerifier: string;
   codeChallenge: string;
 } {
-  const state = toBase64Url(randomBytes(32));
   const nonce = toBase64Url(randomBytes(32));
   const codeVerifier = toBase64Url(randomBytes(32));
   const codeChallenge = toBase64Url(
     createHash("sha256").update(codeVerifier).digest()
   );
-  return { state, nonce, codeVerifier, codeChallenge };
+  return { nonce, codeVerifier, codeChallenge };
 }
 
 export function buildGoogleAuthorizationUrl(

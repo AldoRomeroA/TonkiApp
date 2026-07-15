@@ -35,7 +35,8 @@ describe("googleOAuth validation", () => {
       .replace(/=+$/g, "");
 
     expect(secrets.codeChallenge).toBe(expected);
-    expect(secrets.state).not.toBe(secrets.nonce);
+    expect(secrets.nonce).toBeTruthy();
+    expect(secrets.codeVerifier).toBeTruthy();
   });
 
   it("accepts matching OAuth state values", () => {
