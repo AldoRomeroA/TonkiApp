@@ -22,23 +22,28 @@ generator client {
 
 model User {
   // Cambie user-id a 36 char por los -
-  user_id        String    @id @default(uuid()) @db.Char(36)
+  user_id           String    @id @default(uuid()) @db.Char(36)
   // Quite que el email fuera unico igual que la wallet temporalmente para pruebas
-  email          String?   @db.VarChar(100)
-  name           String    @db.VarChar(100)
-  wallet_address String?
-  age            Int?
-  birth_date     DateTime?
-  type           String    @db.VarChar(100)
-  status         String    @default("active")
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
+  email             String?   @db.VarChar(100)
+  name              String    @db.VarChar(100)
+  first_name        String?   @db.VarChar(50)
+  paternal_surname  String?   @db.VarChar(50)
+  maternal_surname  String?   @db.VarChar(50)
+  avatar_url        String?   @db.VarChar(2048)
+  wallet_address    String?
+  age               Int?
+  birth_date        DateTime?
+  type              String    @db.VarChar(100)
+  status            String    @default("active")
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
   credentials         Credential[]
   auth_identities     AuthIdentity[]
   smart_wallets       SmartWallet[]
   passkey_credentials PasskeyCredential[]
   establishments      Establishment[]
+  establishment_rewards EstablishmentReward[]
   rewards             Reward[]
   airdrop_configs     AirdropConfig[]
   posts               Post[]
@@ -148,11 +153,34 @@ model Establishment {
   name             String   @db.VarChar(150)
   address          String?  @db.VarChar(255)
   category         String?  @db.VarChar(100)
+  avatar_url       String?  @db.VarChar(2048)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
   admin   User     @relation(fields: [admin_id], references: [user_id])
   rewards Reward[]
+  establishment_rewards EstablishmentReward[]
+}
+
+model EstablishmentReward {
+  establishment_reward_id String   @id @default(uuid()) @db.Char(36)
+  establishment_id        String   @db.Char(36)
+  admin_id                String   @db.Char(36)
+  title                   String   @db.VarChar(150)
+  short_description       String   @db.VarChar(255)
+  long_description        String?  @db.Text
+  image_url               String?  @db.VarChar(2048)
+  value_tonkis            Int      @default(0)
+  value_usd               Float    @default(0)
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  establishment Establishment @relation(fields: [establishment_id], references: [establishment_id])
+  admin         User          @relation(fields: [admin_id], references: [user_id])
+
+  @@index([establishment_id])
+  @@index([admin_id])
+  @@map("Establishment_Reward")
 }
 
 model Reward {

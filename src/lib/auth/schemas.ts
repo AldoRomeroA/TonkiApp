@@ -29,6 +29,19 @@ const isoDateOnly = z
     );
   }, "fecha inválida");
 
+const namePart = z
+  .string()
+  .trim()
+  .min(1, "campo requerido")
+  .max(50, "demasiado largo");
+
+const optionalNamePart = z
+  .string()
+  .trim()
+  .max(50, "demasiado largo")
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : ""));
+
 export const walletRegisterSchema = z.object({
   email: z
     .string()
@@ -39,6 +52,19 @@ export const walletRegisterSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
 }) satisfies z.ZodType<WalletRegisterRequest>;
 
+export const profileUpdateSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email("correo inválido")
+    .max(100, "correo demasiado largo"),
+  first_name: namePart,
+  paternal_surname: optionalNamePart,
+  maternal_surname: optionalNamePart,
+  birthDate: isoDateOnly,
+});
+
 export type PasswordLoginInput = z.infer<typeof passwordLoginSchema>;
 export type WalletLoginInput = z.infer<typeof walletLoginSchema>;
 export type WalletRegisterInput = z.infer<typeof walletRegisterSchema>;
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;

@@ -29,6 +29,13 @@ export function normalizeAirdropAssetCode(value: unknown): AirdropAssetCode {
 const USDC_ISSUER_PUBLIC =
   "GA5ZSEJYB37JRC5RJONSTNDBDXKXKVDOOUEFLZXA7GIQQSHATGDFKJ5L";
 
+/**
+ * Real TONKI issuer on public network (same account as app fee wallet).
+ * Confirmed via Horizon / stellar.expert — not the emitter wallet.
+ */
+export const AIRDROP_TONKI_ISSUER_PUBLIC_KEY: string =
+  AIRDROP_APP_FEE_PUBLIC_KEY;
+
 export type AirdropAssetDefinition = {
   code: AirdropAssetCode;
   /** null = native XLM */
@@ -57,7 +64,10 @@ export function getAirdropAssetDefinition(
     default:
       return {
         code: "TONKI",
-        issuer: readIssuer("STELLAR_TONKI_ISSUER", AIRDROP_EMISOR_PUBLIC_KEY),
+        issuer: readIssuer(
+          "STELLAR_TONKI_ISSUER",
+          AIRDROP_TONKI_ISSUER_PUBLIC_KEY
+        ),
         label: "TONKI",
       };
   }

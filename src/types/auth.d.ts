@@ -4,6 +4,13 @@ export interface PublicUser {
   id: string;
   email: string | null;
   username: string | null;
+  name: string | null;
+  first_name: string | null;
+  paternal_surname: string | null;
+  maternal_surname: string | null;
+  birth_date: string | null;
+  wallet_address: string | null;
+  avatar_url: string | null;
 }
 
 export interface AuthResponse {
@@ -40,6 +47,14 @@ export interface WalletRegisterRequest {
   email: string;
   birthDate: string;
   name?: string;
+}
+
+export interface ProfileUpdateRequest {
+  email: string;
+  first_name: string;
+  paternal_surname?: string;
+  maternal_surname?: string;
+  birthDate: string;
 }
 
 /** Wrapped by `apiSuccess`: `{ success: true, user, role }` */
