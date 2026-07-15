@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { getGoogleOAuthConfig } from "src/lib/auth/googleOAuthConfig";
+import { getRecentGoogleOAuthFailures } from "src/lib/auth/googleOAuthDebug";
 import {
   getPublicAppOrigin,
   isUnusableHost,
 } from "src/lib/auth/publicAppOrigin";
+import prisma from "src/lib/db";
 
 /**
  * Safe diagnostics for Hostinger env (no secrets).
@@ -26,6 +28,27 @@ export async function GET(req: Request) {
     }
   }
 
+  let dbOk = false;
+  let authIdentityTableOk = false;
+  let dbError: string | null = null;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbOk = true;
+    const rows = await prisma.$queryRaw<Array<{ c: bigint | number }>>`
+      SELECT COUNT(*) AS c
+      FROM information_schema.tables
+      WHERE table_schema = DATABASE()
+        AND table_name = 'AuthIdentity'
+    `;
+    const count = Number(rows[0]?.c ?? 0);
+    authIdentityTableOk = count > 0;
+  } catch (err) {
+    dbError =
+      err instanceof Error
+        ? err.message.replace(/[A-Za-z0-9_-]{40,}/g, "[redacted]").slice(0, 160)
+        : "db_error";
+  }
+
   return NextResponse.json({
     configured: Boolean(config),
     appUrl,
@@ -42,5 +65,9 @@ export async function GET(req: Request) {
     clientIdSuffix: config?.clientId
       ? config.clientId.slice(-24)
       : null,
+    dbOk,
+    authIdentityTableOk,
+    dbError,
+    recentFailures: getRecentGoogleOAuthFailures(),
   });
 }

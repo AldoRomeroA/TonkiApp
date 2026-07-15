@@ -481,7 +481,16 @@ export async function submitSignedAirdropTransaction(params: {
           .transaction(expectedHash)
           .call();
         if (existing.successful) {
-          response = existing as Horizon.HorizonApi.SubmitTransactionResponse;
+          // TransactionRecord replaces `ledger` with a CallFunction; map via ledger_attr.
+          response = {
+            hash: existing.hash,
+            ledger: existing.ledger_attr,
+            successful: existing.successful,
+            envelope_xdr: existing.envelope_xdr,
+            result_xdr: existing.result_xdr,
+            result_meta_xdr: existing.result_meta_xdr,
+            paging_token: existing.paging_token,
+          };
         } else {
           throw err;
         }

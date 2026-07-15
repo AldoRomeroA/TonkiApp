@@ -4,9 +4,13 @@ import type { GoogleProfile } from "src/lib/auth/googleOAuth";
 import type { User } from "src/generated/prisma/client";
 
 function defaultDisplayName(profile: GoogleProfile): string {
-  if (profile.name?.trim()) return profile.name.trim();
+  if (profile.name?.trim()) return profile.name.trim().slice(0, 100);
   const local = profile.email.split("@")[0]?.trim();
-  return local || "Tonki user";
+  return (local || "Tonki user").slice(0, 100);
+}
+
+function truncateEmail(email: string): string {
+  return email.trim().slice(0, 100);
 }
 
 export async function findOrCreateUserFromGoogle(
@@ -71,7 +75,7 @@ export async function findOrCreateUserFromGoogle(
       const created = await tx.user.create({
         data: {
           name: defaultDisplayName(profile),
-          email: profile.email,
+          email: truncateEmail(profile.email),
           type: "user",
           status: "active",
         },

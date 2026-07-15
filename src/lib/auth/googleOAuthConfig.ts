@@ -12,9 +12,24 @@ export type GoogleOAuthConfig = {
   redirectUri: string;
 };
 
+function looksLikeLocalUri(uri: string): boolean {
+  return (
+    uri.includes("localhost") ||
+    uri.includes("127.0.0.1") ||
+    uri.includes("0.0.0.0") ||
+    uri.includes("[::]")
+  );
+}
+
 function resolveRedirectUri(): string | null {
+  const isProd = process.env.NODE_ENV === "production";
   const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
-  if (explicit) return explicit;
+
+  if (explicit) {
+    // Never send users to localhost from a production deploy (Hostinger .env mistake).
+    if (isProd && looksLikeLocalUri(explicit)) return null;
+    return explicit;
+  }
 
   const appUrl =
     process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
@@ -22,6 +37,7 @@ function resolveRedirectUri(): string | null {
 
   try {
     const origin = new URL(appUrl).origin;
+    if (looksLikeLocalUri(origin) && isProd) return null;
     if (
       origin.includes("0.0.0.0") ||
       origin.includes("127.0.0.1") ||

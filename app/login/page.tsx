@@ -67,7 +67,11 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
   google_oauth_origin_misconfigured:
     "Falta APP_URL en el servidor (ej. https://tonki.io).",
   google_oauth_infrastructure_error:
-    "Tuvimos un problema técnico con Gmail. Intenta más tarde.",
+    "Falta o falla DATABASE_URL en el servidor (Hostinger). Revisa la conexión a MySQL y reinicia la app.",
+  google_oauth_profile_invalid:
+    "Tu perfil de Google no se pudo guardar. Contacta a soporte.",
+  google_oauth_account_conflict:
+    "Esa cuenta de Google ya está vinculada de otra forma. Intenta con otro método o contacta a soporte.",
   account_suspended: "Tu cuenta está suspendida. Contacta a soporte.",
   invalid_account_role: "No pudimos validar tu cuenta. Contacta a soporte.",
   auth_secret_missing:
@@ -76,7 +80,9 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
 
 function resolveQueryError(code: string | null): string {
   if (!code) return "";
-  return GOOGLE_ERROR_MESSAGES[code] ?? "No se pudo iniciar sesión.";
+  const msg = GOOGLE_ERROR_MESSAGES[code] ?? "No se pudo iniciar sesión.";
+  // Surface error code while diagnosing Hostinger Google OAuth.
+  return `${msg} (${code})`;
 }
 
 function buildGoogleStartUrl(from: string | null): string {
